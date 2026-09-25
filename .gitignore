@@ -1,4 +1,5 @@
 .env
+**/.env
 *.exe
 *.log
 .DS_Store
