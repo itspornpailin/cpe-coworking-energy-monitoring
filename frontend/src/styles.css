@@ -1,0 +1,885 @@
+:root {
+  font-family:
+    Inter,
+    "Noto Sans Thai",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  --page: #f2f6f3;
+  --surface: #ffffff;
+  --surface-soft: #f7faf8;
+
+  --text: #17211c;
+  --muted: #66756c;
+
+  --border: #dbe4de;
+
+  --accent: #245b43;
+  --accent-soft: #eaf3ee;
+
+  --shadow:
+    0 12px 32px
+    rgb(18 42 29 / 6%);
+
+  --eating: #e3a62f;
+  --eating-fill:
+    rgb(227 166 47 / 12%);
+
+  --working: #4488d0;
+  --working-fill:
+    rgb(68 136 208 / 11%);
+}
+
+:root[data-theme="night"] {
+  /*
+    Intentionally softer than a typical
+    almost-black dark theme.
+  */
+  --page: #263133;
+  --surface: #303c3d;
+  --surface-soft: #364445;
+
+  --text: #edf3ef;
+  --muted: #bcc9c2;
+
+  --border: #485859;
+
+  --accent: #9ecdb6;
+  --accent-soft: #3b5047;
+
+  --shadow:
+    0 12px 32px
+    rgb(0 0 0 / 12%);
+
+  --eating: #efbd62;
+  --eating-fill:
+    rgb(239 189 98 / 13%);
+
+  --working: #82b6ec;
+  --working-fill:
+    rgb(130 182 236 / 13%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+
+  background: var(--page);
+
+  transition:
+    background-color 180ms ease;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+
+  margin: 0;
+
+  background: var(--page);
+  color: var(--text);
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+button {
+  font: inherit;
+}
+
+button:focus-visible {
+  outline:
+    3px solid
+    color-mix(
+      in srgb,
+      var(--accent) 35%,
+      transparent
+    );
+
+  outline-offset: 2px;
+}
+
+/* ---------- Header ---------- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 78px;
+
+  padding:
+    14px
+    clamp(18px, 4vw, 44px);
+
+  border-bottom:
+    1px solid var(--border);
+
+  background: var(--surface);
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.brand {
+  min-width: 0;
+}
+
+.brand h1 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.brand p {
+  margin: 5px 0 0;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.header-controls {
+  display: grid;
+
+  /*
+    Fixed control widths prevent the
+    language switch from moving things.
+  */
+  grid-template-columns:
+    88px
+    42px
+    104px;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin-left: 24px;
+}
+
+.language-toggle {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  width: 88px;
+  height: 38px;
+
+  padding: 3px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 11px;
+
+  background:
+    var(--surface-soft);
+}
+
+.language-toggle button {
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: var(--muted);
+
+  cursor: pointer;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.language-toggle button.active {
+  background: var(--surface);
+
+  color: var(--text);
+
+  box-shadow:
+    0 1px 4px
+    rgb(0 0 0 / 9%);
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+
+  width: 42px;
+  height: 38px;
+
+  padding: 0;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 11px;
+
+  background:
+    var(--surface-soft);
+
+  color: var(--text);
+
+  cursor: pointer;
+
+  font-size: 20px;
+}
+
+.role-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 104px;
+  height: 38px;
+
+  overflow: hidden;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 999px;
+
+  background:
+    var(--accent-soft);
+
+  color: var(--text);
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+/* ---------- Main ---------- */
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.main-content {
+  width:
+    min(
+      1380px,
+      calc(100% - 36px)
+    );
+
+  margin:
+    24px auto 60px;
+}
+
+/* ---------- Room ---------- */
+
+.room-card {
+  padding: 22px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 18px;
+
+  background:
+    var(--surface);
+
+  box-shadow: var(--shadow);
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.room-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 18px;
+}
+
+.room-card-header h2 {
+  margin: 0;
+
+  font-size: 20px;
+}
+
+.room-card-header p {
+  margin: 5px 0 0;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.plan-status {
+  flex-shrink: 0;
+
+  padding:
+    7px 11px;
+
+  border-radius: 999px;
+
+  background:
+    var(--surface-soft);
+
+  color: var(--muted);
+
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.map-container {
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio:
+    1295 / 825;
+
+  overflow: hidden;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 14px;
+
+  background:
+    var(--surface-soft);
+}
+
+.room-map,
+.zone-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+}
+
+.room-map {
+  object-fit: contain;
+
+  opacity: 0.94;
+}
+
+:root[data-theme="night"]
+.room-map {
+  /*
+    The SVG itself is transparent and
+    neutral, so only a mild brightness
+    adjustment is necessary.
+  */
+  filter:
+    brightness(1.15)
+    contrast(0.9);
+
+  opacity: 0.84;
+}
+
+.zone-overlay {
+  pointer-events: none;
+}
+
+.zone-shape {
+  stroke-width: 5;
+
+  stroke-dasharray:
+    13 10;
+
+  transition:
+    fill 180ms ease,
+    stroke 180ms ease;
+}
+
+.zone-eating {
+  fill: var(--eating-fill);
+  stroke: var(--eating);
+}
+
+.zone-working {
+  fill: var(--working-fill);
+  stroke: var(--working);
+}
+
+.zone-label {
+  fill: var(--text);
+
+  paint-order: stroke;
+
+  stroke: var(--surface);
+  stroke-width: 9px;
+  stroke-linejoin: round;
+
+  font-family:
+    Inter,
+    "Noto Sans Thai",
+    sans-serif;
+
+  font-size: 32px;
+  font-weight: 750;
+}
+
+/* ---------- Frontend scale ---------- */
+
+.map-scale {
+  position: absolute;
+
+  left: 22px;
+  bottom: 18px;
+
+  width: 19.3%;
+  min-width: 110px;
+  max-width: 250px;
+
+  padding:
+    9px 12px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 10px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--surface) 88%,
+      transparent
+    );
+
+  backdrop-filter:
+    blur(5px);
+}
+
+.scale-title {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+.scale-line {
+  position: relative;
+
+  height: 7px;
+
+  border-top:
+    2px solid var(--text);
+}
+
+.scale-line::before,
+.scale-line::after {
+  position: absolute;
+
+  top: -5px;
+
+  width: 2px;
+  height: 9px;
+
+  background:
+    var(--text);
+
+  content: "";
+}
+
+.scale-line::before {
+  left: 0;
+}
+
+.scale-line::after {
+  right: 0;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: 2px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+/* ---------- Zone cards ---------- */
+
+.zone-summary-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 12px;
+
+  margin-top: 14px;
+}
+
+.zone-summary {
+  display: flex;
+
+  gap: 12px;
+
+  padding: 15px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 12px;
+
+  background:
+    var(--surface-soft);
+}
+
+.zone-dot {
+  flex:
+    0 0 auto;
+
+  width: 11px;
+  height: 11px;
+
+  margin-top: 5px;
+
+  border-radius: 50%;
+}
+
+.zone-dot.eating {
+  background:
+    var(--eating);
+}
+
+.zone-dot.working {
+  background:
+    var(--working);
+}
+
+.zone-summary strong {
+  display: block;
+
+  font-size: 14px;
+}
+
+.zone-summary p {
+  margin:
+    4px 0 7px;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.zone-summary div > span {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.map-information {
+  margin-top: 14px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.map-information p {
+  margin:
+    4px 0;
+}
+
+.map-information > span {
+  display: block;
+
+  margin-top: 8px;
+
+  font-size: 10px;
+
+  opacity: 0.8;
+}
+
+/* ---------- Health ---------- */
+
+.health-panel {
+  margin-top: 14px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 13px;
+
+  background:
+    var(--surface);
+}
+
+.health-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding:
+    14px 16px;
+
+  cursor: pointer;
+
+  list-style: none;
+}
+
+.health-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.health-panel summary div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.health-panel summary strong {
+  font-size: 13px;
+}
+
+.health-panel summary span {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.health-summary-dot {
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+}
+
+.health-summary-dot.healthy {
+  background: #459467;
+}
+
+.health-summary-dot.unhealthy {
+  background: #c75a5a;
+}
+
+.health-content {
+  padding:
+    4px 16px 16px;
+
+  border-top:
+    1px solid var(--border);
+}
+
+.health-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+
+  gap: 10px;
+
+  margin-top: 12px;
+}
+
+.health-row > div {
+  padding: 11px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 9px;
+
+  background:
+    var(--surface-soft);
+}
+
+.health-row span,
+.health-row strong {
+  display: block;
+}
+
+.health-row span {
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+.health-row strong {
+  margin-top: 4px;
+
+  font-size: 12px;
+}
+
+.refresh-button {
+  margin-top: 12px;
+
+  padding:
+    7px 12px;
+
+  border: 0;
+
+  border-radius: 8px;
+
+  background:
+    var(--accent);
+
+  color:
+    var(--surface);
+
+  cursor: pointer;
+
+  font-weight: 650;
+}
+
+.error-message {
+  margin-top: 12px;
+
+  padding: 10px;
+
+  border-radius: 8px;
+
+  background:
+    rgb(190 70 70 / 12%);
+
+  color: #c65e5e;
+
+  font-size: 12px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (
+  max-width: 850px
+) {
+  .app-header {
+    align-items: flex-start;
+  }
+
+  .header-controls {
+    grid-template-columns:
+      78px
+      40px
+      96px;
+
+    margin-left: 14px;
+  }
+
+  .language-toggle {
+    width: 78px;
+  }
+
+  .theme-toggle {
+    width: 40px;
+  }
+
+  .role-badge {
+    width: 96px;
+  }
+
+  .zone-summary-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .health-row {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (
+  max-width: 620px
+) {
+  .app-header {
+    flex-direction: column;
+
+    gap: 12px;
+
+    padding:
+      14px 16px;
+  }
+
+  .header-controls {
+    align-self: stretch;
+
+    grid-template-columns:
+      88px
+      42px
+      104px;
+
+    justify-content: end;
+
+    margin-left: 0;
+  }
+
+  .main-content {
+    width:
+      calc(
+        100% - 20px
+      );
+
+    margin-top: 10px;
+  }
+
+  .room-card {
+    padding: 13px;
+
+    border-radius: 14px;
+  }
+
+  .room-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 8px;
+  }
+
+  .zone-label {
+    font-size: 25px;
+
+    stroke-width: 7px;
+  }
+
+  .map-scale {
+    left: 10px;
+    bottom: 10px;
+
+    min-width: 90px;
+
+    padding: 6px 8px;
+  }
+
+  .health-row {
+    grid-template-columns:
+      1fr;
+  }
+}
