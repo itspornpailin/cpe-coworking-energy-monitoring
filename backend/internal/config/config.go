@@ -1,5 +1,11 @@
 package config
 
+// Package config loads runtime configuration from environment variables.
+//
+// Local development values are read from backend/.env.
+// Production secrets should be supplied through real environment variables
+// rather than committed files.
+
 import (
 	"fmt"
 	"os"

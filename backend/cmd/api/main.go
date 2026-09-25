@@ -1,5 +1,16 @@
 package main
 
+// The API executable is the entry point of the backend application.
+//
+// Its responsibility is application startup and shutdown:
+//   - load configuration
+//   - connect to PostgreSQL
+//   - construct the HTTP router
+//   - start the HTTP server
+//   - gracefully shut down resources
+//
+// Business logic should not be implemented in this file.
+
 import (
 	"context"
 	"errors"

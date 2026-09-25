@@ -1,5 +1,11 @@
 package handler
 
+// HealthHandler exposes the service health endpoint.
+//
+// The endpoint verifies both the Go HTTP service and PostgreSQL connectivity,
+// allowing developers and deployment systems to confirm that the backend is
+// operational.
+
 import (
 	"context"
 	"encoding/json"

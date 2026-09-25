@@ -1,5 +1,10 @@
 package database
 
+// Package database manages the PostgreSQL connection pool.
+//
+// The application shares one pgxpool.Pool instead of opening a new database
+// connection for every HTTP request.
+
 import (
 	"context"
 	"fmt"
