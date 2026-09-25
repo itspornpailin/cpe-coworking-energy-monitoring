@@ -1,0 +1,774 @@
+:root {
+  font-family:
+    Inter,
+    "Noto Sans Thai",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  --page: #f2f6f3;
+  --surface: #ffffff;
+  --surface-soft: #f7faf8;
+
+  --text: #17211c;
+  --muted: #66756c;
+
+  --border: #dbe4de;
+
+  --accent: #245b43;
+  --accent-soft: #eaf3ee;
+
+  --shadow:
+    0 12px 32px
+    rgb(18 42 29 / 6%);
+}
+
+:root[data-theme="night"] {
+  --page: #263133;
+  --surface: #303c3d;
+  --surface-soft: #364445;
+
+  --text: #edf3ef;
+  --muted: #bcc9c2;
+
+  --border: #485859;
+
+  --accent: #9ecdb6;
+  --accent-soft: #3b5047;
+
+  --shadow:
+    0 12px 32px
+    rgb(0 0 0 / 12%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+
+  background: var(--page);
+
+  transition:
+    background-color 180ms ease;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+
+  margin: 0;
+
+  background: var(--page);
+  color: var(--text);
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+button {
+  font: inherit;
+}
+
+button:focus-visible {
+  outline:
+    3px solid
+    color-mix(
+      in srgb,
+      var(--accent) 35%,
+      transparent
+    );
+
+  outline-offset: 2px;
+}
+
+/* ========================================
+   Header
+   ======================================== */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 78px;
+
+  padding:
+    14px
+    clamp(18px, 4vw, 44px);
+
+  border-bottom:
+    1px solid var(--border);
+
+  background: var(--surface);
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.brand {
+  min-width: 0;
+}
+
+.brand h1 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.brand p {
+  margin: 5px 0 0;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.header-controls {
+  display: grid;
+
+  grid-template-columns:
+    88px
+    42px
+    104px;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin-left: 24px;
+}
+
+.language-toggle {
+  display: grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  width: 88px;
+  height: 38px;
+
+  padding: 3px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 11px;
+
+  background:
+    var(--surface-soft);
+}
+
+.language-toggle button {
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: var(--muted);
+
+  cursor: pointer;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.language-toggle button.active {
+  background: var(--surface);
+
+  color: var(--text);
+
+  box-shadow:
+    0 1px 4px
+    rgb(0 0 0 / 9%);
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+
+  width: 42px;
+  height: 38px;
+
+  padding: 0;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 11px;
+
+  background:
+    var(--surface-soft);
+
+  color: var(--text);
+
+  cursor: pointer;
+
+  font-size: 20px;
+}
+
+.role-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 104px;
+  height: 38px;
+
+  overflow: hidden;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 999px;
+
+  background:
+    var(--accent-soft);
+
+  color: var(--text);
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+/* ========================================
+   App layout
+   ======================================== */
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.main-content {
+  width:
+    min(
+      1380px,
+      calc(100% - 36px)
+    );
+
+  margin:
+    24px auto 60px;
+}
+
+/* ========================================
+   Room card
+   ======================================== */
+
+.room-card {
+  padding: 22px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 18px;
+
+  background:
+    var(--surface);
+
+  box-shadow:
+    var(--shadow);
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.room-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 18px;
+}
+
+.room-card-header h2 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.room-card-header p {
+  margin: 5px 0 0;
+
+  color: var(--muted);
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ========================================
+   Room plan
+   ======================================== */
+
+.room-plan-figure {
+  margin: 0;
+}
+
+/*
+ * The SVG uses:
+ *
+ * viewBox="0 0 1295 825"
+ *
+ * Keeping the same aspect ratio here prevents
+ * the architectural drawing from stretching.
+ */
+.map-container {
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio:
+    1295 / 825;
+
+  overflow: hidden;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 14px;
+
+  background:
+    var(--surface-soft);
+}
+
+.room-map {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  user-select: none;
+
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease;
+}
+
+:root[data-theme="night"]
+.room-map {
+  /*
+   * The source SVG uses neutral greys.
+   * Slight adjustment keeps it readable in
+   * dark mode without changing its geometry.
+   */
+  filter:
+    brightness(1.12)
+    contrast(0.92);
+
+  opacity: 0.9;
+}
+
+/* ========================================
+   Room information
+   ======================================== */
+
+.room-map-meta {
+  display: grid;
+
+  grid-template-columns:
+    minmax(220px, 0.55fr)
+    minmax(0, 1.45fr);
+
+  align-items: start;
+
+  gap: 24px;
+
+  margin-top: 16px;
+}
+
+.scale-box {
+  min-width: 0;
+}
+
+.scale-title {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  font-weight: 650;
+}
+
+/*
+ * Width is supplied by RoomPlanPanel.tsx.
+ *
+ * 5 / 25.9 ≈ 19.3 %
+ */
+.scale-bar-wrap {
+  min-width: 0;
+}
+
+.scale-bar {
+  position: relative;
+
+  height: 8px;
+
+  border-top:
+    2px solid var(--text);
+}
+
+.scale-left,
+.scale-right {
+  position: absolute;
+
+  top: -5px;
+
+  width: 2px;
+  height: 9px;
+
+  background:
+    var(--text);
+}
+
+.scale-left {
+  left: 0;
+}
+
+.scale-right {
+  right: 0;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: 1px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+  line-height: 1.2;
+
+  white-space: nowrap;
+}
+
+.room-notes {
+  color: var(--muted);
+
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.room-notes p {
+  margin: 0;
+}
+
+.room-notes p + p {
+  margin-top: 6px;
+}
+
+/* ========================================
+   Health
+   ======================================== */
+
+.health-panel {
+  margin-top: 14px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 13px;
+
+  background:
+    var(--surface);
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.health-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding:
+    14px
+    16px;
+
+  cursor: pointer;
+
+  list-style: none;
+}
+
+.health-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.health-panel summary > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.health-panel summary strong {
+  font-size: 13px;
+}
+
+.health-panel summary > div > span {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.health-summary-dot {
+  flex:
+    0 0 auto;
+
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+}
+
+.health-summary-dot.healthy {
+  background:
+    #459467;
+}
+
+.health-summary-dot.unhealthy {
+  background:
+    #c75a5a;
+}
+
+.health-content {
+  padding:
+    4px
+    16px
+    16px;
+
+  border-top:
+    1px solid var(--border);
+}
+
+.health-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+
+  gap: 10px;
+
+  margin-top: 12px;
+}
+
+.health-row > div {
+  min-width: 0;
+
+  padding: 11px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 9px;
+
+  background:
+    var(--surface-soft);
+}
+
+.health-row span,
+.health-row strong {
+  display: block;
+}
+
+.health-row span {
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+.health-row strong {
+  margin-top: 4px;
+
+  overflow-wrap: anywhere;
+
+  font-size: 12px;
+}
+
+.refresh-button {
+  margin-top: 12px;
+
+  padding:
+    7px
+    12px;
+
+  border: 0;
+
+  border-radius: 8px;
+
+  background:
+    var(--accent);
+
+  color:
+    var(--surface);
+
+  cursor: pointer;
+
+  font-weight: 650;
+}
+
+.refresh-button:disabled {
+  cursor: default;
+
+  opacity: 0.6;
+}
+
+.error-message {
+  margin-top: 12px;
+
+  padding: 10px;
+
+  border-radius: 8px;
+
+  background:
+    rgb(190 70 70 / 12%);
+
+  color:
+    #c65e5e;
+
+  font-size: 12px;
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+
+@media (
+  max-width: 850px
+) {
+  .app-header {
+    align-items: flex-start;
+  }
+
+  .header-controls {
+    grid-template-columns:
+      78px
+      40px
+      96px;
+
+    margin-left: 14px;
+  }
+
+  .language-toggle {
+    width: 78px;
+  }
+
+  .theme-toggle {
+    width: 40px;
+  }
+
+  .role-badge {
+    width: 96px;
+  }
+
+  .room-map-meta {
+    grid-template-columns:
+      minmax(180px, 0.7fr)
+      minmax(0, 1.3fr);
+  }
+
+  .health-row {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (
+  max-width: 620px
+) {
+  .app-header {
+    flex-direction: column;
+
+    gap: 12px;
+
+    padding:
+      14px
+      16px;
+  }
+
+  .header-controls {
+    align-self: stretch;
+
+    grid-template-columns:
+      88px
+      42px
+      104px;
+
+    justify-content: end;
+
+    margin-left: 0;
+  }
+
+  .main-content {
+    width:
+      calc(
+        100% - 20px
+      );
+
+    margin-top: 10px;
+  }
+
+  .room-card {
+    padding: 13px;
+
+    border-radius: 14px;
+  }
+
+  .room-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 8px;
+  }
+
+  .map-container {
+    border-radius: 10px;
+  }
+
+  .room-map-meta {
+    grid-template-columns:
+      1fr;
+
+    gap: 14px;
+
+    margin-top: 13px;
+  }
+
+  .health-row {
+    grid-template-columns:
+      1fr;
+  }
+}
