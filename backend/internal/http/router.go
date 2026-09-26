@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/auth"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/config"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http/handler"
 )
@@ -20,45 +21,97 @@ func NewRouter(
 ) http.Handler {
 	router := chi.NewRouter()
 
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-
-	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{
-			cfg.FrontendOrigin,
-		},
-
-		AllowedMethods: []string{
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodPatch,
-			http.MethodDelete,
-			http.MethodOptions,
-		},
-
-		AllowedHeaders: []string{
-			"Accept",
-			"Authorization",
-			"Content-Type",
-		},
-
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
-
-	healthHandler := handler.NewHealthHandler(
-		startedAt,
-		db,
+	router.Use(
+		middleware.RequestID,
 	)
 
-	router.Route("/api/v1", func(r chi.Router) {
-		r.Get(
-			"/health",
-			healthHandler.Health,
+	router.Use(
+		middleware.RealIP,
+	)
+
+	router.Use(
+		middleware.Logger,
+	)
+
+	router.Use(
+		middleware.Recoverer,
+	)
+
+	router.Use(
+		cors.Handler(
+			cors.Options{
+				AllowedOrigins: []string{
+					cfg.FrontendOrigin,
+				},
+
+				AllowedMethods: []string{
+					http.MethodGet,
+					http.MethodPost,
+					http.MethodPatch,
+					http.MethodDelete,
+					http.MethodOptions,
+				},
+
+				AllowedHeaders: []string{
+					"Accept",
+					"Authorization",
+					"Content-Type",
+				},
+
+				AllowCredentials: true,
+
+				MaxAge: 300,
+			},
+		),
+	)
+
+	healthHandler :=
+		handler.NewHealthHandler(
+			startedAt,
+			db,
 		)
-	})
+
+	authService :=
+		auth.NewService(
+			db,
+			cfg.SessionTTL,
+		)
+
+	authHandler :=
+		handler.NewAuthHandler(
+			authService,
+			cfg.CookieSecure,
+		)
+
+	router.Route(
+		"/api/v1",
+		func(r chi.Router) {
+			r.Get(
+				"/health",
+				healthHandler.Health,
+			)
+
+			r.Route(
+				"/auth",
+				func(r chi.Router) {
+					r.Post(
+						"/login",
+						authHandler.Login,
+					)
+
+					r.Post(
+						"/logout",
+						authHandler.Logout,
+					)
+
+					r.Get(
+						"/me",
+						authHandler.Me,
+					)
+				},
+			)
+		},
+	)
 
 	return router
 }
