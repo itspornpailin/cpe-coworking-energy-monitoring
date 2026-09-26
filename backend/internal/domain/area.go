@@ -8,9 +8,10 @@ import "time"
 // be averaged before environmental rules are evaluated.
 //
 // Example:
-//   LUX-11
-//   LUX-12  -> Area A
-//   LUX-13
+//
+//	LUX-11
+//	LUX-12  -> Area A
+//	LUX-13
 type Area struct {
 	ID     int64 `json:"id"`
 	RoomID int64 `json:"roomId"`
