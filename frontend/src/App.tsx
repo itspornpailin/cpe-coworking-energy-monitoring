@@ -4,73 +4,162 @@ import {
   useState,
 } from "react";
 
-import { getHealth } from "./api/health";
+import {
+  getHealth,
+} from "./api/health";
 
-import { Header } from "./components/Header";
-import { HealthPanel } from "./components/HealthPanel";
-import { RoomPlanPanel } from "./components/RoomPlanPanel";
+import {
+  getAuthState,
+  loginAdmin,
+  logoutAdmin,
+} from "./api/auth";
 
-import type { HealthResponse } from "./types/health";
+import {
+  ApiError,
+} from "./api/client";
+
+import {
+  Header,
+} from "./components/Header";
+
+import {
+  HealthPanel,
+} from "./components/HealthPanel";
+
+import {
+  RoomPlanPanel,
+} from "./components/RoomPlanPanel";
+
+import {
+  LoginModal,
+} from "./components/LoginModal";
+
+import type {
+  HealthResponse,
+} from "./types/health";
+
+import type {
+  AuthState,
+} from "./types/auth";
+
+import {
+  translations,
+} from "./i18n/translations";
 
 import type {
   Language,
   Theme,
 } from "./i18n/translations";
 
-function getInitialLanguage(): Language {
+type AuthErrorKey =
+  | "invalidCredentials"
+  | "requestFailed";
+
+const GUEST_AUTH_STATE:
+  AuthState = {
+    authenticated: false,
+    role: "guest",
+    user: null,
+  };
+
+function getInitialLanguage():
+  Language {
   const savedLanguage =
     window.localStorage.getItem(
       "cpe-language",
     );
 
-  return savedLanguage === "th"
+  return savedLanguage ===
+    "th"
     ? "th"
     : "en";
 }
 
-function getInitialTheme(): Theme {
+function getInitialTheme():
+  Theme {
   const savedTheme =
     window.localStorage.getItem(
       "cpe-theme",
     );
 
-  return savedTheme === "night"
+  return savedTheme ===
+    "night"
     ? "night"
     : "day";
 }
 
 function App() {
-  const [language, setLanguage] =
+  const [
+    language,
+    setLanguage,
+  ] =
     useState<Language>(
       getInitialLanguage,
     );
 
-  const [theme, setTheme] =
+  const [
+    theme,
+    setTheme,
+  ] =
     useState<Theme>(
       getInitialTheme,
     );
 
-  const [health, setHealth] =
-    useState<HealthResponse | null>(
-      null,
+  const [
+    auth,
+    setAuth,
+  ] =
+    useState<AuthState>(
+      GUEST_AUTH_STATE,
     );
 
-  const [healthError, setHealthError] =
-    useState<string | null>(null);
-
-  const [healthLoading, setHealthLoading] =
+  const [
+    authLoading,
+    setAuthLoading,
+  ] =
     useState(true);
 
-  /*
-    Synchronize UI preferences with
-    the browser.
+  const [
+    authError,
+    setAuthError,
+  ] =
+    useState<
+      AuthErrorKey | null
+    >(null);
 
-    These effects modify external browser
-    state rather than React component state,
-    which is exactly what useEffect is for.
-  */
+  const [
+    loginModalOpen,
+    setLoginModalOpen,
+  ] =
+    useState(false);
+
+  const [
+    health,
+    setHealth,
+  ] =
+    useState<
+      HealthResponse | null
+    >(null);
+
+  const [
+    healthError,
+    setHealthError,
+  ] =
+    useState<
+      string | null
+    >(null);
+
+  const [
+    healthLoading,
+    setHealthLoading,
+  ] =
+    useState(true);
+
   useEffect(() => {
-    document.documentElement.dataset.theme =
+    document
+      .documentElement
+      .dataset
+      .theme =
       theme;
 
     window.localStorage.setItem(
@@ -80,7 +169,9 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
-    document.documentElement.lang =
+    document
+      .documentElement
+      .lang =
       language;
 
     window.localStorage.setItem(
@@ -89,43 +180,45 @@ function App() {
     );
   }, [language]);
 
-  const loadHealth =
+  const loadAuth =
     useCallback(
       async (
-        signal?: AbortSignal,
+        signal?:
+          AbortSignal,
       ) => {
         try {
           const result =
-            await getHealth(signal);
+            await getAuthState(
+              signal,
+            );
 
-          setHealth(result);
-          setHealthError(null);
-        } catch (requestError) {
+          setAuth(result);
+          setAuthError(null);
+        } catch (
+          requestError
+        ) {
           if (
-            requestError instanceof
-              DOMException &&
+            requestError
+              instanceof
+                DOMException &&
             requestError.name ===
               "AbortError"
           ) {
             return;
           }
 
-          setHealth(null);
-
+          setAuth(
+            GUEST_AUTH_STATE,
+          );
+        } finally {
           if (
-            requestError instanceof
-            Error
+            signal?.aborted !==
+            true
           ) {
-            setHealthError(
-              requestError.message,
-            );
-          } else {
-            setHealthError(
-              "Unable to connect to backend.",
+            setAuthLoading(
+              false,
             );
           }
-        } finally {
-          setHealthLoading(false);
         }
       },
       [],
@@ -135,27 +228,103 @@ function App() {
     const controller =
       new AbortController();
 
-    /*
-      Schedule the first request instead of
-      executing a state-updating function
-      synchronously inside the effect body.
+    const requestId =
+      window.setTimeout(
+        () => {
+          void loadAuth(
+            controller.signal,
+          );
+        },
+        0,
+      );
 
-      This also satisfies:
-      react-hooks/set-state-in-effect
-    */
+    return () => {
+      window.clearTimeout(
+        requestId,
+      );
+
+      controller.abort();
+    };
+  }, [loadAuth]);
+
+  const loadHealth =
+    useCallback(
+      async (
+        signal?:
+          AbortSignal,
+      ) => {
+        try {
+          const result =
+            await getHealth(
+              signal,
+            );
+
+          setHealth(result);
+
+          setHealthError(
+            null,
+          );
+        } catch (
+          requestError
+        ) {
+          if (
+            requestError
+              instanceof
+                DOMException &&
+            requestError.name ===
+              "AbortError"
+          ) {
+            return;
+          }
+
+          setHealth(null);
+
+          if (
+            requestError
+              instanceof
+                Error
+          ) {
+            setHealthError(
+              requestError
+                .message,
+            );
+          } else {
+            setHealthError(
+              "Unable to connect to backend.",
+            );
+          }
+        } finally {
+          setHealthLoading(
+            false,
+          );
+        }
+      },
+      [],
+    );
+
+  useEffect(() => {
+    const controller =
+      new AbortController();
+
     const initialRequestId =
-      window.setTimeout(() => {
-        void loadHealth(
-          controller.signal,
-        );
-      }, 0);
+      window.setTimeout(
+        () => {
+          void loadHealth(
+            controller.signal,
+          );
+        },
+        0,
+      );
 
     const intervalId =
-      window.setInterval(() => {
-        void loadHealth(
-          controller.signal,
-        );
-      }, 10_000);
+      window.setInterval(
+        () => {
+          void loadHealth(
+            controller.signal,
+          );
+        },
+        10_000,
+      );
 
     return () => {
       window.clearTimeout(
@@ -177,40 +346,174 @@ function App() {
       await loadHealth();
     };
 
+  const handleAdminLogin =
+    async (
+      username: string,
+      password: string,
+    ) => {
+      setAuthLoading(true);
+      setAuthError(null);
+
+      try {
+        const result =
+          await loginAdmin({
+            username,
+            password,
+          });
+
+        setAuth(result);
+
+        setLoginModalOpen(
+          false,
+        );
+      } catch (
+        requestError
+      ) {
+        if (
+          requestError
+            instanceof
+              ApiError &&
+          requestError.status ===
+            401
+        ) {
+          setAuthError(
+            "invalidCredentials",
+          );
+        } else {
+          setAuthError(
+            "requestFailed",
+          );
+        }
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+  const handleAdminLogout =
+    async () => {
+      setAuthLoading(true);
+      setAuthError(null);
+
+      try {
+        const result =
+          await logoutAdmin();
+
+        setAuth(result);
+      } catch {
+        setAuthError(
+          "requestFailed",
+        );
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+  const authErrorMessage =
+    authError === null
+      ? null
+      : translations[
+          language
+        ].auth[
+          authError
+        ];
+
   return (
     <div className="app-shell">
       <Header
-        language={language}
-        theme={theme}
-        role="guest"
+        language={
+          language
+        }
+        theme={
+          theme
+        }
+        role={
+          auth.role
+        }
+        authLoading={
+          authLoading
+        }
         onLanguageChange={
           setLanguage
         }
         onThemeToggle={() => {
           setTheme(
-            (currentTheme) =>
-              currentTheme === "day"
+            (
+              currentTheme,
+            ) =>
+              currentTheme ===
+              "day"
                 ? "night"
                 : "day",
           );
+        }}
+        onLoginClick={() => {
+          setAuthError(null);
+
+          setLoginModalOpen(
+            true,
+          );
+        }}
+        onLogoutClick={() => {
+          void handleAdminLogout();
         }}
       />
 
       <main className="main-content">
         <RoomPlanPanel
-          language={language}
+          language={
+            language
+          }
         />
 
         <HealthPanel
-          language={language}
-          health={health}
-          error={healthError}
-          loading={healthLoading}
+          language={
+            language
+          }
+          health={
+            health
+          }
+          error={
+            healthError
+          }
+          loading={
+            healthLoading
+          }
           onRefresh={() => {
             void handleHealthRefresh();
           }}
         />
       </main>
+
+      <LoginModal
+        open={
+          loginModalOpen
+        }
+        language={
+          language
+        }
+        loading={
+          authLoading
+        }
+        error={
+          authErrorMessage
+        }
+        onClose={() => {
+          setLoginModalOpen(
+            false,
+          );
+
+          setAuthError(null);
+        }}
+        onLogin={(
+          username,
+          password,
+        ) => {
+          void handleAdminLogin(
+            username,
+            password,
+          );
+        }}
+      />
     </div>
   );
 }

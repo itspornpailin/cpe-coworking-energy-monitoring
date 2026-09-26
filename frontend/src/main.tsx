@@ -1,20 +1,32 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import {
+  StrictMode,
+} from "react";
+
+import {
+  createRoot,
+} from "react-dom/client";
 
 import App from "./App.tsx";
 
 import "./styles.css";
+import "./auth.css";
 
 const rootElement =
-  document.getElementById("root");
+  document.getElementById(
+    "root",
+  );
 
-if (rootElement === null) {
+if (
+  rootElement === null
+) {
   throw new Error(
     "Root element was not found.",
   );
 }
 
-createRoot(rootElement).render(
+createRoot(
+  rootElement,
+).render(
   <StrictMode>
     <App />
   </StrictMode>,

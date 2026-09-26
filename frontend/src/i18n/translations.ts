@@ -1,5 +1,10 @@
-export type Language = "en" | "th";
-export type Theme = "day" | "night";
+export type Language =
+  | "en"
+  | "th";
+
+export type Theme =
+  | "day"
+  | "night";
 
 export const translations = {
   en: {
@@ -7,10 +12,26 @@ export const translations = {
       subtitle:
         "Illuminance & Temperature Monitoring",
 
-      guest: "Guest",
-      admin: "Admin",
+      guest:
+        "Guest",
 
-      languageLabel: "Language",
+      admin:
+        "Admin",
+
+      login:
+        "Login",
+
+      logout:
+        "Logout",
+
+      dayMode:
+        "Day",
+
+      nightMode:
+        "Night",
+
+      languageLabel:
+        "Language",
 
       switchToDay:
         "Switch to day mode",
@@ -20,7 +41,8 @@ export const translations = {
     },
 
     room: {
-      title: "CPE Co-Working Space",
+      title:
+        "CPE Co-Working Space",
 
       subtitle:
         "Simplified room view based on the as-built plan",
@@ -31,26 +53,69 @@ export const translations = {
       note:
         "The room drawing is simplified for dashboard use. Sensor positions are not shown yet.",
 
-      scale: "Scale",
+      scale:
+        "Scale",
+    },
+
+    auth: {
+      title:
+        "Administrator Login",
+
+      loginPrompt:
+        "Enter your administrator account to access restricted controls.",
+
+      username:
+        "Username",
+
+      password:
+        "Password",
+
+      login:
+        "Login",
+
+      close:
+        "Close login",
+
+      working:
+        "Please wait...",
+
+      invalidCredentials:
+        "Invalid username or password.",
+
+      requestFailed:
+        "Unable to complete the authentication request.",
     },
 
     health: {
-      title: "System Status",
+      title:
+        "System Status",
 
       subtitle:
         "Backend development diagnostics",
 
-      refresh: "Refresh",
-      checking: "Checking...",
+      refresh:
+        "Refresh",
 
-      backend: "Backend API",
-      database: "PostgreSQL",
+      checking:
+        "Checking...",
 
-      connected: "Connected",
-      unavailable: "Unavailable",
+      backend:
+        "Backend API",
 
-      uptime: "Uptime",
-      timestamp: "Server time",
+      database:
+        "PostgreSQL",
+
+      connected:
+        "Connected",
+
+      unavailable:
+        "Unavailable",
+
+      uptime:
+        "Uptime",
+
+      timestamp:
+        "Server time",
 
       backendUnavailable:
         "Unable to connect to the backend.",
@@ -62,10 +127,26 @@ export const translations = {
       subtitle:
         "ติดตามค่าความส่องสว่างและอุณหภูมิ",
 
-      guest: "ผู้เยี่ยมชม",
-      admin: "ผู้ดูแลระบบ",
+      guest:
+        "ผู้เยี่ยมชม",
 
-      languageLabel: "ภาษา",
+      admin:
+        "ผู้ดูแลระบบ",
+
+      login:
+        "เข้าสู่ระบบ",
+
+      logout:
+        "ออกจากระบบ",
+
+      dayMode:
+        "กลางวัน",
+
+      nightMode:
+        "กลางคืน",
+
+      languageLabel:
+        "ภาษา",
 
       switchToDay:
         "เปลี่ยนเป็นโหมดกลางวัน",
@@ -75,7 +156,8 @@ export const translations = {
     },
 
     room: {
-      title: "CPE Co-Working Space",
+      title:
+        "CPE Co-Working Space",
 
       subtitle:
         "ภาพห้องแบบย่อจากแปลน As-built",
@@ -86,26 +168,69 @@ export const translations = {
       note:
         "แปลนห้องถูกลดรายละเอียดเพื่อให้เหมาะกับหน้า Dashboard และยังไม่แสดงตำแหน่งเซนเซอร์",
 
-      scale: "สเกล",
+      scale:
+        "สเกล",
+    },
+
+    auth: {
+      title:
+        "เข้าสู่ระบบผู้ดูแลระบบ",
+
+      loginPrompt:
+        "กรอกบัญชีผู้ดูแลระบบเพื่อใช้งานส่วนควบคุมที่จำกัดสิทธิ์",
+
+      username:
+        "ชื่อผู้ใช้",
+
+      password:
+        "รหัสผ่าน",
+
+      login:
+        "เข้าสู่ระบบ",
+
+      close:
+        "ปิดหน้าต่างเข้าสู่ระบบ",
+
+      working:
+        "กรุณารอสักครู่...",
+
+      invalidCredentials:
+        "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+
+      requestFailed:
+        "ไม่สามารถดำเนินการยืนยันตัวตนได้",
     },
 
     health: {
-      title: "สถานะระบบ",
+      title:
+        "สถานะระบบ",
 
       subtitle:
         "ข้อมูลสำหรับตรวจสอบระบบระหว่างการพัฒนา",
 
-      refresh: "รีเฟรช",
-      checking: "กำลังตรวจสอบ...",
+      refresh:
+        "รีเฟรช",
 
-      backend: "Backend API",
-      database: "PostgreSQL",
+      checking:
+        "กำลังตรวจสอบ...",
 
-      connected: "เชื่อมต่อแล้ว",
-      unavailable: "ไม่สามารถเชื่อมต่อ",
+      backend:
+        "Backend API",
 
-      uptime: "ระยะเวลาทำงาน",
-      timestamp: "เวลาของเซิร์ฟเวอร์",
+      database:
+        "PostgreSQL",
+
+      connected:
+        "เชื่อมต่อแล้ว",
+
+      unavailable:
+        "ไม่สามารถเชื่อมต่อ",
+
+      uptime:
+        "ระยะเวลาทำงาน",
+
+      timestamp:
+        "เวลาของเซิร์ฟเวอร์",
 
       backendUnavailable:
         "ไม่สามารถเชื่อมต่อ Backend ได้",

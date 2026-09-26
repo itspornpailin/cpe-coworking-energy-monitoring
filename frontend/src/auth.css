@@ -1,0 +1,451 @@
+/* ========================================
+   Header authentication controls
+   ======================================== */
+
+.header-controls {
+  display: grid;
+
+  grid-template-columns:
+    88px
+    112px
+    210px;
+
+  align-items: center;
+
+  gap: 9px;
+
+  margin-left: 24px;
+}
+
+/*
+ * Language selector always occupies
+ * exactly the same space.
+ */
+.language-toggle {
+  width: 88px;
+  height: 38px;
+}
+
+/*
+ * Day / Night control has a stable width
+ * regardless of EN / TH text length.
+ */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  width: 112px;
+  min-width: 112px;
+  height: 38px;
+
+  padding: 0 10px;
+
+  white-space: nowrap;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.theme-toggle-icon {
+  flex: 0 0 auto;
+
+  width: 18px;
+
+  text-align: center;
+
+  font-size: 17px;
+  line-height: 1;
+}
+
+/*
+ * Role + Login/Logout together always use
+ * the same total width.
+ */
+.header-auth {
+  display: grid;
+
+  grid-template-columns:
+    100px
+    100px;
+
+  align-items: center;
+
+  gap: 10px;
+
+  width: 210px;
+}
+
+.role-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100px;
+  min-width: 100px;
+  height: 38px;
+
+  padding: 0 8px;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+}
+
+.role-badge.admin {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.header-auth-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100px;
+  min-width: 100px;
+  height: 38px;
+
+  padding: 0 8px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: var(--accent);
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.header-auth-button:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.header-auth-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ========================================
+   Login modal
+   ======================================== */
+
+.modal-backdrop {
+  position: fixed;
+
+  z-index: 1000;
+
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  padding: 20px;
+
+  background:
+    rgb(10 18 14 / 48%);
+
+  backdrop-filter:
+    blur(3px);
+}
+
+.login-modal {
+  width:
+    min(
+      100%,
+      420px
+    );
+
+  padding: 22px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 16px;
+
+  background:
+    var(--surface);
+
+  box-shadow:
+    0 22px 70px
+    rgb(0 0 0 / 24%);
+}
+
+.login-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 18px;
+
+  margin-bottom: 20px;
+}
+
+.login-modal-header h2 {
+  margin: 0;
+
+  color:
+    var(--text);
+
+  font-size: 19px;
+}
+
+.login-modal-header p {
+  margin:
+    5px 0 0;
+
+  color:
+    var(--muted);
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.modal-close-button {
+  display: grid;
+
+  flex:
+    0 0 auto;
+
+  place-items: center;
+
+  width: 34px;
+  height: 34px;
+
+  padding: 0;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 9px;
+
+  background:
+    var(--surface-soft);
+
+  color:
+    var(--muted);
+
+  cursor: pointer;
+
+  font-size: 22px;
+  line-height: 1;
+}
+
+.modal-close-button:hover:not(
+  :disabled
+) {
+  color:
+    var(--text);
+}
+
+.modal-close-button:disabled {
+  cursor: default;
+
+  opacity: 0.5;
+}
+
+/* ========================================
+   Login form
+   ======================================== */
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.auth-field span {
+  color:
+    var(--muted);
+
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.auth-field input {
+  width: 100%;
+  height: 42px;
+
+  padding:
+    0 12px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 9px;
+
+  background:
+    var(--surface-soft);
+
+  color:
+    var(--text);
+
+  font: inherit;
+
+  outline: none;
+}
+
+.auth-field input:focus {
+  border-color:
+    var(--accent);
+
+  box-shadow:
+    0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--accent) 16%,
+      transparent
+    );
+}
+
+.auth-field input:disabled {
+  opacity: 0.65;
+}
+
+.login-submit-button {
+  height: 42px;
+
+  margin-top: 2px;
+
+  border: 0;
+
+  border-radius: 9px;
+
+  background:
+    var(--accent);
+
+  color:
+    var(--surface);
+
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.login-submit-button:disabled {
+  cursor: default;
+
+  opacity: 0.6;
+}
+
+.auth-error {
+  padding:
+    10px 12px;
+
+  border-radius: 9px;
+
+  background:
+    rgb(190 70 70 / 12%);
+
+  color:
+    #c65e5e;
+
+  font-size: 12px;
+}
+
+/* ========================================
+   Responsive header
+   ======================================== */
+
+@media (max-width: 850px) {
+  .header-controls {
+    grid-template-columns:
+      88px
+      112px;
+
+    justify-content: end;
+
+    margin-left: 14px;
+  }
+
+  .header-auth {
+    grid-column:
+      1 / -1;
+
+    justify-self: end;
+  }
+}
+
+@media (max-width: 620px) {
+  .header-controls {
+    width: 100%;
+
+    grid-template-columns:
+      88px
+      112px;
+
+    justify-content: start;
+
+    margin-left: 0;
+  }
+
+  .header-auth {
+    grid-column:
+      1 / -1;
+
+    justify-self: start;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+}
+
+/* ========================================
+   Modal translation stability
+   ======================================== */
+
+.login-modal {
+  width: min(
+    calc(100vw - 40px),
+    420px
+  );
+}
+
+/*
+ * Both languages receive the same header
+ * space, even when Thai uses more characters.
+ */
+.login-modal-header > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.login-modal-header h2 {
+  min-height: 26px;
+}
+
+.login-modal-header p {
+  min-height: 38px;
+}
+
+/*
+ * Field labels use a predictable height.
+ */
+.auth-field > span {
+  min-height: 16px;
+
+  display: flex;
+  align-items: center;
+}
+
+.login-submit-button {
+  width: 100%;
+}

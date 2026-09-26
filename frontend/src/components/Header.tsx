@@ -3,7 +3,9 @@ import type {
   Theme,
 } from "../i18n/translations";
 
-import { translations } from "../i18n/translations";
+import {
+  translations,
+} from "../i18n/translations";
 
 interface HeaderProps {
   language: Language;
@@ -11,24 +13,36 @@ interface HeaderProps {
 
   role: "guest" | "admin";
 
+  authLoading: boolean;
+
   onLanguageChange:
     (language: Language) => void;
 
   onThemeToggle: () => void;
+
+  onLoginClick: () => void;
+
+  onLogoutClick: () => void;
 }
 
 export function Header({
   language,
   theme,
   role,
+  authLoading,
   onLanguageChange,
   onThemeToggle,
+  onLoginClick,
+  onLogoutClick,
 }: HeaderProps) {
   const copy =
     translations[language];
 
+  const isAdmin =
+    role === "admin";
+
   const roleLabel =
-    role === "admin"
+    isAdmin
       ? copy.header.admin
       : copy.header.guest;
 
@@ -83,7 +97,9 @@ export function Header({
         <button
           type="button"
           className="theme-toggle"
-          onClick={onThemeToggle}
+          onClick={
+            onThemeToggle
+          }
           aria-label={
             theme === "day"
               ? copy.header.switchToNight
@@ -95,13 +111,64 @@ export function Header({
               : copy.header.switchToDay
           }
         >
-          {theme === "day"
-            ? "☾"
-            : "☀"}
+          <span
+            className="theme-toggle-icon"
+            aria-hidden="true"
+          >
+            {theme === "day"
+              ? "☀"
+              : "☾"}
+          </span>
+
+          <span>
+            {theme === "day"
+              ? copy.header.dayMode
+              : copy.header.nightMode}
+          </span>
         </button>
 
-        <div className="role-badge">
-          {roleLabel}
+        <div className="header-auth">
+          <div
+            className={
+              isAdmin
+                ? "role-badge admin"
+                : "role-badge"
+            }
+          >
+            {roleLabel}
+          </div>
+
+          {isAdmin ? (
+            <button
+              type="button"
+              className="header-auth-button"
+              disabled={
+                authLoading
+              }
+              onClick={
+                onLogoutClick
+              }
+            >
+              {
+                copy.header.logout
+              }
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="header-auth-button"
+              disabled={
+                authLoading
+              }
+              onClick={
+                onLoginClick
+              }
+            >
+              {
+                copy.header.login
+              }
+            </button>
+          )}
         </div>
       </div>
     </header>
