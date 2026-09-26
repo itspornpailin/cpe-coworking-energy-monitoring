@@ -660,6 +660,68 @@ button:focus-visible {
 }
 
 /* ========================================
+   Translation layout stability
+   ======================================== */
+
+/*
+ * Reserve enough space for either the
+ * English or Thai header subtitle.
+ */
+.brand {
+  min-width: 280px;
+}
+
+.brand p {
+  min-height: 20px;
+
+  display: flex;
+  align-items: center;
+}
+
+/*
+ * Room title area keeps the same height
+ * even if Thai wraps differently.
+ */
+.room-card-header > div {
+  min-width: 0;
+}
+
+.room-card-header h2 {
+  min-height: 26px;
+}
+
+.room-card-header p {
+  min-height: 40px;
+
+  max-width: 720px;
+}
+
+/*
+ * Reserve enough room for the translated
+ * notes below the floor plan.
+ */
+.room-notes {
+  min-height: 48px;
+}
+
+/*
+ * Health cards should not resize because
+ * one translated label is longer.
+ */
+.health-row > div {
+  min-height: 72px;
+}
+
+.health-row span {
+  min-height: 15px;
+}
+
+.health-panel summary > div {
+  min-height: 34px;
+  justify-content: center;
+}
+
+/* ========================================
    Responsive
    ======================================== */
 
