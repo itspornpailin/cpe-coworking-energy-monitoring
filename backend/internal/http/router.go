@@ -12,6 +12,8 @@ import (
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/auth"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/config"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http/handler"
+
+	appmiddleware "github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http/middleware"
 )
 
 func NewRouter(
@@ -83,12 +85,22 @@ func NewRouter(
 			cfg.CookieSecure,
 		)
 
+	lightingHandler :=
+		handler.NewLightingHandler(
+			db,
+		)
+
 	router.Route(
 		"/api/v1",
 		func(r chi.Router) {
 			r.Get(
 				"/health",
 				healthHandler.Health,
+			)
+
+			r.Get(
+				"/lighting-zones",
+				lightingHandler.List,
 			)
 
 			r.Route(
@@ -107,6 +119,21 @@ func NewRouter(
 					r.Get(
 						"/me",
 						authHandler.Me,
+					)
+				},
+			)
+
+			r.Group(
+				func(admin chi.Router) {
+					admin.Use(
+						appmiddleware.RequireAdmin(
+							authService,
+						),
+					)
+
+					admin.Patch(
+						"/admin/lighting-zones/{areaID}",
+						lightingHandler.UpdateRule,
 					)
 				},
 			)
