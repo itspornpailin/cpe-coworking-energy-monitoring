@@ -90,6 +90,11 @@ func NewRouter(
 			db,
 		)
 
+	environmentHandler :=
+		handler.NewEnvironmentHandler(
+			db,
+		)
+
 	router.Route(
 		"/api/v1",
 		func(r chi.Router) {
@@ -101,6 +106,11 @@ func NewRouter(
 			r.Get(
 				"/lighting-zones",
 				lightingHandler.List,
+			)
+
+			r.Get(
+				"/environment-zones",
+				environmentHandler.List,
 			)
 
 			r.Route(

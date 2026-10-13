@@ -29,45 +29,77 @@ const COPY = {
   en: {
     title: "Area Conditions",
     subtitle: "Current Lux and temperature by area.",
+
     normal: "Normal",
     tooDark: "Too dark",
-    bright: "Bright area",
-    dark: "Dark area",
+
+    bright: "Threshold-Enabled Area",
+    dark: "Threshold-Exempt Area",
+
     warning: "This area is too dark!",
+
     edit: "Edit settings",
     settings: "Area settings",
-    brightHelp: "Warn when Lux is below the minimum.",
-    darkHelp: "Allow low light without a warning.",
+
+    brightHelp:
+      "Warn when Lux falls below the minimum threshold.",
+
+    darkHelp:
+      "No low-light warning is generated for this area.",
+
     minimum: "Minimum illumination",
+
     save: "Save",
     saving: "Saving...",
     cancel: "Cancel",
     saved: "Saved",
-    invalidLux: "Minimum Lux must be greater than 0.",
-    saveError: "Unable to save this area.",
-    loading: "Loading area data...",
+
+    invalidLux:
+      "Minimum Lux must be greater than 0.",
+
+    saveError:
+      "Unable to save this area.",
+
+    loading:
+      "Loading area data...",
   },
 
   th: {
     title: "สภาพแวดล้อมแต่ละพื้นที่",
     subtitle: "ค่า Lux และอุณหภูมิปัจจุบันของแต่ละพื้นที่",
+
     normal: "ปกติ",
     tooDark: "แสงน้อยเกินไป",
-    bright: "พื้นที่สว่าง",
-    dark: "พื้นที่มืด",
+
+    bright: "พื้นที่ใช้เกณฑ์ความสว่าง",
+    dark: "พื้นที่ยกเว้นเกณฑ์ความสว่าง",
+
     warning: "พื้นที่นี้มีแสงน้อยเกินไป!",
+
     edit: "แก้ไขการตั้งค่า",
     settings: "การตั้งค่าพื้นที่",
-    brightHelp: "แจ้งเตือนเมื่อค่า Lux ต่ำกว่าค่าขั้นต่ำ",
-    darkHelp: "อนุญาตให้แสงน้อยโดยไม่แจ้งเตือน",
+
+    brightHelp:
+      "แจ้งเตือนเมื่อค่า Lux ต่ำกว่าค่าขั้นต่ำ",
+
+    darkHelp:
+      "ไม่แจ้งเตือนเมื่อระดับแสงต่ำสำหรับพื้นที่นี้",
+
     minimum: "ค่าความสว่างขั้นต่ำ",
+
     save: "บันทึก",
     saving: "กำลังบันทึก...",
     cancel: "ยกเลิก",
     saved: "บันทึกแล้ว",
-    invalidLux: "ค่า Lux ขั้นต่ำต้องมากกว่า 0",
-    saveError: "ไม่สามารถบันทึกพื้นที่นี้ได้",
-    loading: "กำลังโหลดข้อมูลพื้นที่...",
+
+    invalidLux:
+      "ค่า Lux ขั้นต่ำต้องมากกว่า 0",
+
+    saveError:
+      "ไม่สามารถบันทึกพื้นที่นี้ได้",
+
+    loading:
+      "กำลังโหลดข้อมูลพื้นที่...",
   },
 } as const;
 
