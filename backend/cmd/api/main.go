@@ -23,6 +23,7 @@ import (
 
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/config"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/database"
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/ingest"
 
 	httpserver "github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http"
 )
@@ -56,6 +57,24 @@ func main() {
 	log.Println(
 		"successfully connected to PostgreSQL",
 	)
+
+	mqttSubscriber, err :=
+		ingest.StartFromEnv(db)
+
+	if err != nil {
+		log.Fatalf(
+			"failed to initialize MQTT ingestion: %v",
+			err,
+		)
+	}
+
+	if mqttSubscriber != nil {
+		defer mqttSubscriber.Close()
+
+		log.Println(
+			"MQTT sensor ingestion enabled",
+		)
+	}
 
 	router := httpserver.NewRouter(
 		cfg,

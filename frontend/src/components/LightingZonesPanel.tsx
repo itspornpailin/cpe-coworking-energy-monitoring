@@ -48,16 +48,16 @@ const COPY = {
       "Lighting requirement",
 
     brightTitle:
-      "Bright required",
+      "Threshold Enabled",
 
     brightDescription:
-      "Warn when the area's average light level is below the minimum.",
+      "Warn when the area's average light level falls below the minimum threshold.",
 
     darkTitle:
-      "Dark allowed",
+      "Threshold Exempt",
 
     darkDescription:
-      "Do not generate low-light warnings for this area.",
+      "No low-light warning is generated for this area.",
 
     minimum:
       "Minimum illumination",
@@ -109,16 +109,16 @@ const COPY = {
       "ข้อกำหนดด้านแสง",
 
     brightTitle:
-      "ต้องการพื้นที่สว่าง",
+      "ใช้เกณฑ์ความสว่าง",
 
     brightDescription:
       "แจ้งเตือนเมื่อค่าแสงเฉลี่ยของพื้นที่ต่ำกว่าค่าขั้นต่ำ",
 
     darkTitle:
-      "อนุญาตให้พื้นที่มืด",
+      "ยกเว้นเกณฑ์ความสว่าง",
 
     darkDescription:
-      "ไม่แจ้งเตือนเมื่อพื้นที่มีแสงน้อย",
+      "ไม่แจ้งเตือนเมื่อระดับแสงต่ำสำหรับพื้นที่นี้",
 
     minimum:
       "ค่าความสว่างขั้นต่ำ",
