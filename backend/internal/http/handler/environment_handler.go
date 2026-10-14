@@ -2,12 +2,18 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/telemetry"
 )
 
+const liveReadingMaxAge = 5 * time.Minute
+
 type EnvironmentHandler struct {
-	db *pgxpool.Pool
+	db   *pgxpool.Pool
+	live *telemetry.Store
 }
 
 type environmentZoneResponse struct {
@@ -16,8 +22,7 @@ type environmentZoneResponse struct {
 	Code string `json:"code"`
 	Name string `json:"name"`
 
-	AverageLux *float64 `json:"averageLux"`
-
+	AverageLux         *float64 `json:"averageLux"`
 	AverageTemperature *float64 `json:"averageTemperature"`
 
 	MinLux float64 `json:"minLux"`
@@ -27,11 +32,23 @@ type environmentZoneResponse struct {
 	Warning bool `json:"warning"`
 }
 
+type environmentZoneState struct {
+	response environmentZoneResponse
+
+	luxSum   float64
+	luxCount int
+
+	tempSum   float64
+	tempCount int
+}
+
 func NewEnvironmentHandler(
 	db *pgxpool.Pool,
+	live *telemetry.Store,
 ) *EnvironmentHandler {
 	return &EnvironmentHandler{
-		db: db,
+		db:   db,
+		live: live,
 	}
 }
 
@@ -39,108 +56,25 @@ func (h *EnvironmentHandler) List(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	const query = `
-WITH latest_readings AS (
-    SELECT DISTINCT ON (sr.sensor_id)
-        sr.sensor_id,
-        sr.value,
-        sr.measured_at
-    FROM sensor_readings sr
-    ORDER BY
-        sr.sensor_id,
-        sr.measured_at DESC
-),
-area_values AS (
-    SELECT
-        a.id,
-        a.code,
-        a.name,
-
-        AVG(lr.value)
-            FILTER (
-                WHERE s.type = 'illuminance'
-            )::DOUBLE PRECISION
-            AS average_lux,
-
-        AVG(lr.value)
-            FILTER (
-                WHERE s.type = 'temperature'
-            )::DOUBLE PRECISION
-            AS average_temperature
-
-    FROM areas a
-
-    LEFT JOIN sensors s
-        ON s.area_id = a.id
-        AND s.is_active = TRUE
-
-    LEFT JOIN latest_readings lr
-        ON lr.sensor_id = s.id
-
-    GROUP BY
-        a.id,
-        a.code,
-        a.name
-)
+	rows, err := h.db.Query(
+		r.Context(),
+		`
 SELECT
-    av.id,
-    av.code,
-    av.name,
-
-    av.average_lux,
-    av.average_temperature,
-
-    COALESCE(
-        ar.min_value,
-        500
-    )::DOUBLE PRECISION
-        AS min_lux,
-
-    COALESCE(
-        ar.is_enabled,
-        FALSE
-    ) AS is_enabled,
-
-    COALESCE(
-        ar.notify_below,
-        FALSE
-    ) AS notify_below
-
-FROM area_values av
-
-LEFT JOIN area_rules ar
-    ON ar.area_id = av.id
-    AND ar.sensor_type = 'illuminance'
-
-WHERE
-    av.code LIKE 'ILL-%'
-    OR ar.id IS NOT NULL
-    OR EXISTS (
-        SELECT 1
-        FROM sensors sx
-        WHERE
-            sx.area_id = av.id
-            AND sx.is_active = TRUE
-            AND sx.type IN (
-                'illuminance',
-                'temperature'
-            )
-    )
-
-ORDER BY av.code;
-`
-
-	rows, err :=
-		h.db.Query(
-			r.Context(),
-			query,
-		)
+    id,
+    code,
+    name,
+    min_lux,
+    threshold_enabled
+FROM zones
+ORDER BY code;
+`,
+	)
 
 	if err != nil {
 		writeLightingError(
 			w,
 			http.StatusInternalServerError,
-			"unable to load environment zones",
+			"unable to load zones",
 		)
 
 		return
@@ -148,78 +82,166 @@ ORDER BY av.code;
 
 	defer rows.Close()
 
-	result :=
+	var zones []*environmentZoneState
+
+	byID :=
 		make(
-			[]environmentZoneResponse,
-			0,
+			map[int64]*environmentZoneState,
 		)
 
 	for rows.Next() {
-		var (
-			zone environmentZoneResponse
+		state :=
+			&environmentZoneState{}
 
-			isEnabled   bool
-			notifyBelow bool
-		)
+		var thresholdEnabled bool
 
-		err :=
-			rows.Scan(
-				&zone.AreaID,
-				&zone.Code,
-				&zone.Name,
-				&zone.AverageLux,
-				&zone.AverageTemperature,
-				&zone.MinLux,
-				&isEnabled,
-				&notifyBelow,
-			)
+		if err := rows.Scan(
+			&state.response.AreaID,
+			&state.response.Code,
+			&state.response.Name,
+			&state.response.MinLux,
+			&thresholdEnabled,
+		); err != nil {
 
-		if err != nil {
 			writeLightingError(
 				w,
 				http.StatusInternalServerError,
-				"unable to read environment zone",
+				"unable to read zone",
 			)
 
 			return
 		}
 
-		zone.LightingMode =
+		state.response.LightingMode =
 			"dark_allowed"
 
-		if isEnabled &&
-			notifyBelow {
-
-			zone.LightingMode =
+		if thresholdEnabled {
+			state.response.LightingMode =
 				"bright_required"
 		}
 
-		if zone.AverageLux != nil &&
-			zone.LightingMode ==
-				"bright_required" &&
-			*zone.AverageLux <
-				zone.MinLux {
+		zones = append(
+			zones,
+			state,
+		)
 
-			zone.Warning = true
-		}
-
-		result =
-			append(
-				result,
-				zone,
-			)
+		byID[state.response.AreaID] = state
 	}
 
-	if err :=
-		rows.Err(); err != nil {
+	assignmentRows, err :=
+		h.db.Query(
+			r.Context(),
+			`
+SELECT
+    zone_id,
+    node_id
+FROM zone_sensor_assignments;
+`,
+		)
 
+	if err != nil {
 		writeLightingError(
 			w,
 			http.StatusInternalServerError,
-			"unable to finish reading environment zones",
+			"unable to load zone assignments",
 		)
 
 		return
+	}
+
+	defer assignmentRows.Close()
+
+	now := time.Now()
+
+	for assignmentRows.Next() {
+		var (
+			zoneID int64
+			nodeID string
+		)
+
+		if err := assignmentRows.Scan(
+			&zoneID,
+			&nodeID,
+		); err != nil {
+
+			continue
+		}
+
+		state :=
+			byID[zoneID]
+
+		if state == nil {
+			continue
+		}
+
+		reading, ok :=
+			h.live.Get(nodeID)
+
+		if !ok ||
+			now.Sub(
+				reading.UpdatedAt,
+			) > liveReadingMaxAge {
+
+			continue
+		}
+
+		if reading.LightLux != nil {
+			state.luxSum +=
+				*reading.LightLux
+
+			state.luxCount++
+		}
+
+		if reading.TemperatureC != nil {
+			state.tempSum +=
+				*reading.TemperatureC
+
+			state.tempCount++
+		}
+	}
+
+	result :=
+		make(
+			[]environmentZoneResponse,
+			0,
+			len(zones),
+		)
+
+	for _, state := range zones {
+
+		if state.luxCount > 0 {
+			value :=
+				state.luxSum /
+					float64(
+						state.luxCount,
+					)
+
+			state.response.AverageLux =
+				&value
+		}
+
+		if state.tempCount > 0 {
+			value :=
+				state.tempSum /
+					float64(
+						state.tempCount,
+					)
+
+			state.response.AverageTemperature =
+				&value
+		}
+
+		state.response.Warning =
+			state.response.LightingMode ==
+				"bright_required" &&
+				state.response.AverageLux != nil &&
+				*state.response.AverageLux <
+					state.response.MinLux
+
+		result = append(
+			result,
+			state.response,
+		)
 	}
 
 	writeLightingJSON(

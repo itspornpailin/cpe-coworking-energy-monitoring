@@ -24,6 +24,7 @@ import (
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/config"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/database"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/ingest"
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/telemetry"
 
 	httpserver "github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http"
 )
@@ -39,7 +40,11 @@ func main() {
 		)
 	}
 
-	appContext := context.Background()
+	appContext, cancelApp :=
+		context.WithCancel(
+			context.Background(),
+		)
+	defer cancelApp()
 
 	db, err := database.Connect(
 		appContext,
@@ -58,8 +63,17 @@ func main() {
 		"successfully connected to PostgreSQL",
 	)
 
+	liveStore :=
+		telemetry.NewStore(db)
+
+	go liveStore.Run(
+		appContext,
+	)
+
 	mqttSubscriber, err :=
-		ingest.StartFromEnv(db)
+		ingest.StartFromEnv(
+			liveStore,
+		)
 
 	if err != nil {
 		log.Fatalf(
@@ -80,6 +94,7 @@ func main() {
 		cfg,
 		startedAt,
 		db,
+		liveStore,
 	)
 
 	server := &http.Server{

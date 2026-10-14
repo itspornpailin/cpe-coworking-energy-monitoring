@@ -12,6 +12,7 @@ import (
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/auth"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/config"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http/handler"
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/telemetry"
 
 	appmiddleware "github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http/middleware"
 )
@@ -20,6 +21,7 @@ func NewRouter(
 	cfg config.Config,
 	startedAt time.Time,
 	db *pgxpool.Pool,
+	live *telemetry.Store,
 ) http.Handler {
 	router := chi.NewRouter()
 
@@ -88,11 +90,13 @@ func NewRouter(
 	lightingHandler :=
 		handler.NewLightingHandler(
 			db,
+			live,
 		)
 
 	environmentHandler :=
 		handler.NewEnvironmentHandler(
 			db,
+			live,
 		)
 
 	router.Route(

@@ -9,6 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/telemetry"
 )
 
 const (
@@ -17,7 +19,8 @@ const (
 )
 
 type LightingHandler struct {
-	db *pgxpool.Pool
+	db   *pgxpool.Pool
+	live *telemetry.Store
 }
 
 type lightingZoneResponse struct {
@@ -41,115 +44,37 @@ type lightingZoneResponse struct {
 }
 
 type updateLightingRuleRequest struct {
-	Mode string `json:"mode"`
-
+	Mode   string   `json:"mode"`
 	MinLux *float64 `json:"minLux"`
 }
 
 func NewLightingHandler(
 	db *pgxpool.Pool,
+	live *telemetry.Store,
 ) *LightingHandler {
 	return &LightingHandler{
-		db: db,
+		db:   db,
+		live: live,
 	}
 }
 
-// List returns all illumination zones.
-//
-// The average is calculated using the newest reading
-// currently available from every active illuminance sensor
-// assigned to that area.
 func (h *LightingHandler) List(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	const query = `
-WITH latest_readings AS (
-    SELECT DISTINCT ON (sr.sensor_id)
-        sr.sensor_id,
-        sr.value,
-        sr.measured_at
-    FROM sensor_readings sr
-    INNER JOIN sensors s
-        ON s.id = sr.sensor_id
-    WHERE
-        s.type = 'illuminance'
-        AND s.is_active = TRUE
-    ORDER BY
-        sr.sensor_id,
-        sr.measured_at DESC
-)
+	rows, err := h.db.Query(
+		r.Context(),
+		`
 SELECT
-    a.id,
-    a.code,
-    a.name,
-
-    COUNT(s.id)::BIGINT AS sensor_count,
-
-    AVG(lr.value)::DOUBLE PRECISION
-        AS average_lux,
-
-    MAX(lr.measured_at)
-        AS measured_at,
-
-    COALESCE(
-        ar.min_value,
-        500
-    )::DOUBLE PRECISION
-        AS min_lux,
-
-    COALESCE(
-        ar.is_enabled,
-        FALSE
-    ) AS is_enabled,
-
-    COALESCE(
-        ar.notify_below,
-        FALSE
-    ) AS notify_below
-
-FROM areas a
-
-LEFT JOIN sensors s
-    ON s.area_id = a.id
-    AND s.type = 'illuminance'
-    AND s.is_active = TRUE
-
-LEFT JOIN latest_readings lr
-    ON lr.sensor_id = s.id
-
-LEFT JOIN area_rules ar
-    ON ar.area_id = a.id
-    AND ar.sensor_type = 'illuminance'
-
-WHERE
-    a.code LIKE 'ILL-%'
-    OR ar.id IS NOT NULL
-    OR EXISTS (
-        SELECT 1
-        FROM sensors sx
-        WHERE
-            sx.area_id = a.id
-            AND sx.type = 'illuminance'
-    )
-
-GROUP BY
-    a.id,
-    a.code,
-    a.name,
-    ar.min_value,
-    ar.is_enabled,
-    ar.notify_below
-
-ORDER BY
-    a.code;
-`
-
-	rows, err :=
-		h.db.Query(
-			r.Context(),
-			query,
-		)
+    id,
+    code,
+    name,
+    min_lux,
+    threshold_enabled
+FROM zones
+ORDER BY code;
+`,
+	)
 
 	if err != nil {
 		writeLightingError(
@@ -171,31 +96,18 @@ ORDER BY
 
 	for rows.Next() {
 		var (
-			areaID      int64
-			code        string
-			name        string
-			sensorCount int64
-			averageLux  *float64
-			measuredAt  *time.Time
-			minLux      float64
-			isEnabled   bool
-			notifyBelow bool
+			zone             lightingZoneResponse
+			thresholdEnabled bool
 		)
 
-		err :=
-			rows.Scan(
-				&areaID,
-				&code,
-				&name,
-				&sensorCount,
-				&averageLux,
-				&measuredAt,
-				&minLux,
-				&isEnabled,
-				&notifyBelow,
-			)
+		if err := rows.Scan(
+			&zone.AreaID,
+			&zone.Code,
+			&zone.Name,
+			&zone.MinLux,
+			&thresholdEnabled,
+		); err != nil {
 
-		if err != nil {
 			writeLightingError(
 				w,
 				http.StatusInternalServerError,
@@ -205,57 +117,117 @@ ORDER BY
 			return
 		}
 
-		mode :=
+		zone.Mode =
 			lightingModeDarkAllowed
 
-		if isEnabled &&
-			notifyBelow {
-
-			mode =
+		if thresholdEnabled {
+			zone.Mode =
 				lightingModeBrightRequired
 		}
 
-		status := "no_data"
-		warning := false
+		nodeRows, err :=
+			h.db.Query(
+				r.Context(),
+				`
+SELECT node_id
+FROM zone_sensor_assignments
+WHERE zone_id = $1;
+`,
+				zone.AreaID,
+			)
 
-		if averageLux != nil {
-			status = "ok"
+		if err != nil {
+			writeLightingError(
+				w,
+				http.StatusInternalServerError,
+				"unable to load zone sensors",
+			)
 
-			if mode ==
-				lightingModeBrightRequired &&
-				*averageLux < minLux {
+			return
+		}
 
-				status = "too_dark"
-				warning = true
+		var (
+			luxSum   float64
+			luxCount int64
+			latest   *time.Time
+		)
+
+		for nodeRows.Next() {
+			var nodeID string
+
+			if err :=
+				nodeRows.Scan(
+					&nodeID,
+				); err != nil {
+
+				continue
+			}
+
+			zone.SensorCount++
+
+			reading, ok :=
+				h.live.Get(nodeID)
+
+			if !ok ||
+				time.Since(
+					reading.UpdatedAt,
+				) > liveReadingMaxAge ||
+				reading.LightLux == nil {
+
+				continue
+			}
+
+			luxSum +=
+				*reading.LightLux
+
+			luxCount++
+
+			if latest == nil ||
+				reading.UpdatedAt.After(
+					*latest,
+				) {
+
+				value :=
+					reading.UpdatedAt
+
+				latest =
+					&value
 			}
 		}
 
-		zones =
-			append(
-				zones,
-				lightingZoneResponse{
-					AreaID:      areaID,
-					Code:        code,
-					Name:        name,
-					SensorCount: sensorCount,
-					AverageLux:  averageLux,
-					MeasuredAt:  measuredAt,
-					MinLux:      minLux,
-					Mode:        mode,
-					Status:      status,
-					Warning:     warning,
-				},
-			)
-	}
+		nodeRows.Close()
 
-	if err := rows.Err(); err != nil {
-		writeLightingError(
-			w,
-			http.StatusInternalServerError,
-			"unable to finish reading lighting zones",
+		zone.MeasuredAt =
+			latest
+
+		zone.Status = "no_data"
+
+		if luxCount > 0 {
+			value :=
+				luxSum /
+					float64(luxCount)
+
+			zone.AverageLux =
+				&value
+
+			zone.Status = "ok"
+
+			if zone.Mode ==
+				lightingModeBrightRequired &&
+				value < zone.MinLux {
+
+				zone.Status =
+					"too_dark"
+
+				zone.Warning =
+					true
+			}
+		}
+
+		zones = append(
+			zones,
+			zone,
 		)
-
-		return
 	}
 
 	writeLightingJSON(
@@ -265,15 +237,6 @@ ORDER BY
 	)
 }
 
-// UpdateRule changes the illumination policy for one area.
-//
-// bright_required:
-//   - rule enabled
-//   - warn when average lux is below minLux
-//
-// dark_allowed:
-//   - illumination warning disabled
-//   - lux can be high or low without generating a warning
 func (h *LightingHandler) UpdateRule(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -288,15 +251,12 @@ func (h *LightingHandler) UpdateRule(
 		return
 	}
 
-	areaIDText :=
-		chi.URLParam(
-			r,
-			"areaID",
-		)
-
 	areaID, err :=
 		strconv.ParseInt(
-			areaIDText,
+			chi.URLParam(
+				r,
+				"areaID",
+			),
 			10,
 			64,
 		)
@@ -307,7 +267,7 @@ func (h *LightingHandler) UpdateRule(
 		writeLightingError(
 			w,
 			http.StatusBadRequest,
-			"invalid area id",
+			"invalid zone id",
 		)
 
 		return
@@ -358,19 +318,10 @@ func (h *LightingHandler) UpdateRule(
 		writeLightingError(
 			w,
 			http.StatusBadRequest,
-			"mode must be bright_required or dark_allowed",
+			"invalid lighting mode",
 		)
 
 		return
-	}
-
-	// Preserve a sensible value even while the
-	// rule is disabled.
-	minLux := 500.0
-
-	if request.MinLux != nil {
-		minLux =
-			*request.MinLux
 	}
 
 	if request.Mode ==
@@ -380,125 +331,60 @@ func (h *LightingHandler) UpdateRule(
 		writeLightingError(
 			w,
 			http.StatusBadRequest,
-			"minLux is required for bright_required mode",
+			"minLux is required",
 		)
 
 		return
 	}
 
-	if minLux <= 0 ||
-		minLux > 200000 {
+	if request.MinLux != nil &&
+		(*request.MinLux <= 0 || *request.MinLux > 200000) {
 
 		writeLightingError(
 			w,
 			http.StatusBadRequest,
-			"minLux must be greater than 0 and at most 200000",
+			"invalid minLux",
 		)
 
 		return
 	}
 
-	var areaExists bool
+	enabled :=
+		request.Mode ==
+			lightingModeBrightRequired
+
+	var minLux float64
 
 	err =
 		h.db.QueryRow(
 			r.Context(),
 			`
-SELECT EXISTS (
-    SELECT 1
-    FROM areas
-    WHERE id = $1
-);
+UPDATE zones
+SET
+    threshold_enabled = $2,
+
+    min_lux =
+        COALESCE(
+            $3,
+            min_lux
+        ),
+
+    updated_at = NOW()
+WHERE id = $1
+RETURNING min_lux;
 `,
 			areaID,
+			enabled,
+			request.MinLux,
 		).Scan(
-			&areaExists,
+			&minLux,
 		)
 
 	if err != nil {
-		writeLightingError(
-			w,
-			http.StatusInternalServerError,
-			"unable to verify area",
-		)
-
-		return
-	}
-
-	if !areaExists {
 		writeLightingError(
 			w,
 			http.StatusNotFound,
-			"area not found",
-		)
-
-		return
-	}
-
-	isEnabled :=
-		request.Mode ==
-			lightingModeBrightRequired
-
-	notifyBelow :=
-		request.Mode ==
-			lightingModeBrightRequired
-
-	_, err =
-		h.db.Exec(
-			r.Context(),
-			`
-INSERT INTO area_rules (
-    area_id,
-    sensor_type,
-    min_value,
-    max_value,
-    notify_below,
-    notify_above,
-    is_enabled
-)
-VALUES (
-    $1,
-    'illuminance',
-    $2,
-    NULL,
-    $3,
-    FALSE,
-    $4
-)
-ON CONFLICT (
-    area_id,
-    sensor_type
-)
-DO UPDATE SET
-    min_value =
-        EXCLUDED.min_value,
-
-    max_value =
-        NULL,
-
-    notify_below =
-        EXCLUDED.notify_below,
-
-    notify_above =
-        FALSE,
-
-    is_enabled =
-        EXCLUDED.is_enabled,
-
-    updated_at =
-        NOW();
-`,
-			areaID,
-			minLux,
-			notifyBelow,
-			isEnabled,
-		)
-
-	if err != nil {
-		writeLightingError(
-			w,
-			http.StatusInternalServerError,
-			"unable to update lighting rule",
+			"zone not found",
 		)
 
 		return
@@ -525,15 +411,12 @@ func writeLightingJSON(
 		"application/json",
 	)
 
-	w.Header().Set(
-		"Cache-Control",
-		"no-store",
-	)
-
 	w.WriteHeader(status)
 
-	_ = json.NewEncoder(w).
-		Encode(value)
+	_ =
+		json.NewEncoder(
+			w,
+		).Encode(value)
 }
 
 func writeLightingError(

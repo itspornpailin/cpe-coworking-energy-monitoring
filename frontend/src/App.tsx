@@ -258,7 +258,7 @@ function App() {
             controller.signal,
           );
         },
-        10_000,
+        2_000,
       );
 
     return () => {
