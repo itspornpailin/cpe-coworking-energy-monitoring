@@ -1,7 +1,16 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
-import type { Language } from "../i18n/translations";
-import type { UserRole } from "../types/auth";
+import type {
+  Language,
+} from "../i18n/translations";
+
+import type {
+  UserRole,
+} from "../types/auth";
+
 import type {
   EnvironmentZone,
   LightingMode,
@@ -20,26 +29,37 @@ interface EnvironmentSidebarProps {
   ) => Promise<void>;
 }
 
-interface ZoneDraft {
-  mode: LightingMode;
-  minLux: string;
-}
-
 const COPY = {
   en: {
-    title: "Area Conditions",
-    subtitle: "Current Lux and temperature by area.",
+    title:
+      "Area Conditions",
 
-    normal: "Normal",
-    tooDark: "Too dark",
+    subtitle:
+      "Current Lux and temperature by area.",
 
-    bright: "Threshold-Enabled Area",
-    dark: "Threshold-Exempt Area",
+    normal:
+      "Normal",
 
-    warning: "This area is too dark!",
+    tooDark:
+      "Too dark",
 
-    edit: "Edit settings",
-    settings: "Area settings",
+    bright:
+      "Threshold-Enabled Area",
+
+    dark:
+      "Threshold-Exempt Area",
+
+    warning:
+      "This area is too dark!",
+
+    settingsButton:
+      "Settings",
+
+    settings:
+      "Threshold Settings",
+
+    lightingPolicy:
+      "Brightness policy",
 
     brightHelp:
       "Warn when Lux falls below the minimum threshold.",
@@ -47,37 +67,64 @@ const COPY = {
     darkHelp:
       "No low-light warning is generated for this area.",
 
-    minimum: "Minimum illumination",
+    minimum:
+      "Minimum illumination",
 
-    save: "Save",
-    saving: "Saving...",
-    cancel: "Cancel",
-    saved: "Saved",
+    save:
+      "Save",
+
+    saving:
+      "Saving...",
+
+    cancel:
+      "Cancel",
+
+    saved:
+      "Saved",
+
+    close:
+      "Close settings",
 
     invalidLux:
       "Minimum Lux must be greater than 0.",
 
     saveError:
-      "Unable to save this area.",
+      "Unable to save this zone.",
 
     loading:
       "Loading area data...",
   },
 
   th: {
-    title: "สภาพแวดล้อมแต่ละพื้นที่",
-    subtitle: "ค่า Lux และอุณหภูมิปัจจุบันของแต่ละพื้นที่",
+    title:
+      "สภาพแวดล้อมแต่ละพื้นที่",
 
-    normal: "ปกติ",
-    tooDark: "แสงน้อยเกินไป",
+    subtitle:
+      "ค่า Lux และอุณหภูมิปัจจุบันของแต่ละพื้นที่",
 
-    bright: "พื้นที่ใช้เกณฑ์ความสว่าง",
-    dark: "พื้นที่ยกเว้นเกณฑ์ความสว่าง",
+    normal:
+      "ปกติ",
 
-    warning: "พื้นที่นี้มีแสงน้อยเกินไป!",
+    tooDark:
+      "แสงน้อยเกินไป",
 
-    edit: "แก้ไขการตั้งค่า",
-    settings: "การตั้งค่าพื้นที่",
+    bright:
+      "พื้นที่ใช้เกณฑ์ความสว่าง",
+
+    dark:
+      "พื้นที่ยกเว้นเกณฑ์ความสว่าง",
+
+    warning:
+      "พื้นที่นี้มีแสงน้อยเกินไป!",
+
+    settingsButton:
+      "ตั้งค่า",
+
+    settings:
+      "การตั้งค่าเกณฑ์ความสว่าง",
+
+    lightingPolicy:
+      "การตั้งค่าความสว่าง",
 
     brightHelp:
       "แจ้งเตือนเมื่อค่า Lux ต่ำกว่าค่าขั้นต่ำ",
@@ -85,23 +132,59 @@ const COPY = {
     darkHelp:
       "ไม่แจ้งเตือนเมื่อระดับแสงต่ำสำหรับพื้นที่นี้",
 
-    minimum: "ค่าความสว่างขั้นต่ำ",
+    minimum:
+      "ค่าความสว่างขั้นต่ำ",
 
-    save: "บันทึก",
-    saving: "กำลังบันทึก...",
-    cancel: "ยกเลิก",
-    saved: "บันทึกแล้ว",
+    save:
+      "บันทึก",
+
+    saving:
+      "กำลังบันทึก...",
+
+    cancel:
+      "ยกเลิก",
+
+    saved:
+      "บันทึกแล้ว",
+
+    close:
+      "ปิดการตั้งค่า",
 
     invalidLux:
       "ค่า Lux ขั้นต่ำต้องมากกว่า 0",
 
     saveError:
-      "ไม่สามารถบันทึกพื้นที่นี้ได้",
+      "ไม่สามารถบันทึกการตั้งค่าโซนนี้ได้",
 
     loading:
       "กำลังโหลดข้อมูลพื้นที่...",
   },
 } as const;
+
+
+/*
+ * Keep the backend code (ILL-A, ILL-B, ILL-C)
+ * internally, but show simple user-facing names.
+ */
+function getZoneDisplayName(
+  zone: EnvironmentZone,
+  language: Language,
+) {
+  const suffix =
+    zone.code
+      .split("-")
+      .at(-1)
+      ?.toUpperCase();
+
+  if (!suffix) {
+    return zone.name;
+  }
+
+  return language === "th"
+    ? `โซน ${suffix}`
+    : `Zone ${suffix}`;
+}
+
 
 export function EnvironmentSidebar({
   language,
@@ -110,332 +193,601 @@ export function EnvironmentSidebar({
   loading = false,
   onUpdateZone,
 }: EnvironmentSidebarProps) {
-  const copy = COPY[language];
+  const copy =
+    COPY[language];
 
-  const [drafts, setDrafts] =
-    useState<Record<number, ZoneDraft>>({});
+  const [
+    editingZone,
+    setEditingZone,
+  ] =
+    useState<EnvironmentZone | null>(
+      null,
+    );
 
-  const [editingAreaId, setEditingAreaId] =
-    useState<number | null>(null);
+  const [
+    draftMode,
+    setDraftMode,
+  ] =
+    useState<LightingMode>(
+      "bright_required",
+    );
 
-  const [savingAreaId, setSavingAreaId] =
-    useState<number | null>(null);
+  const [
+    draftMinLux,
+    setDraftMinLux,
+  ] =
+    useState("500");
 
-  const [savedAreaId, setSavedAreaId] =
-    useState<number | null>(null);
+  const [
+    saving,
+    setSaving,
+  ] =
+    useState(false);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [
+    savedAreaId,
+    setSavedAreaId,
+  ] =
+    useState<number | null>(
+      null,
+    );
 
-  useEffect(() => {
-    const nextDrafts: Record<number, ZoneDraft> = {};
+  const [
+    error,
+    setError,
+  ] =
+    useState<string | null>(
+      null,
+    );
 
-    for (const zone of zones) {
-      nextDrafts[zone.areaId] = {
-        mode: zone.lightingMode,
-        minLux: String(zone.minLux),
-      };
-    }
 
-    setDrafts(nextDrafts);
-  }, [zones]);
-
-  function updateDraft(
-    areaId: number,
-    patch: Partial<ZoneDraft>,
+  function openSettings(
+    zone: EnvironmentZone,
   ) {
-    setDrafts((current) => ({
-      ...current,
-      [areaId]: {
-        ...current[areaId],
-        ...patch,
-      },
-    }));
+    setEditingZone(zone);
+
+    setDraftMode(
+      zone.lightingMode,
+    );
+
+    setDraftMinLux(
+      String(zone.minLux),
+    );
 
     setSavedAreaId(null);
     setError(null);
   }
 
-  function startEditing(zone: EnvironmentZone) {
-    setDrafts((current) => ({
-      ...current,
-      [zone.areaId]: {
-        mode: zone.lightingMode,
-        minLux: String(zone.minLux),
-      },
-    }));
 
-    setEditingAreaId(zone.areaId);
-    setSavedAreaId(null);
-    setError(null);
-  }
-
-  function cancelEditing(zone: EnvironmentZone) {
-    setDrafts((current) => ({
-      ...current,
-      [zone.areaId]: {
-        mode: zone.lightingMode,
-        minLux: String(zone.minLux),
-      },
-    }));
-
-    setEditingAreaId(null);
-    setError(null);
-  }
-
-  async function saveZone(areaId: number) {
-    const draft = drafts[areaId];
-
-    if (!draft || !onUpdateZone) {
+  function closeSettings() {
+    if (saving) {
       return;
     }
 
-    const minLux = Number(draft.minLux);
+    setEditingZone(null);
+    setError(null);
+  }
+
+
+  /*
+   * Modal behavior:
+   * - Escape closes it
+   * - prevent the page behind it from scrolling
+   */
+  useEffect(() => {
+    if (editingZone === null) {
+      return;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    function handleKeyDown(
+      event: KeyboardEvent,
+    ) {
+      if (
+        event.key === "Escape" &&
+        !saving
+      ) {
+        setEditingZone(null);
+        setError(null);
+      }
+    }
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow;
+
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
+    };
+  }, [
+    editingZone,
+    saving,
+  ]);
+
+
+  async function saveSettings() {
+    if (
+      editingZone === null ||
+      !onUpdateZone
+    ) {
+      return;
+    }
+
+    const minLux =
+      Number(draftMinLux);
 
     if (
-      draft.mode === "bright_required" &&
-      (!Number.isFinite(minLux) || minLux <= 0)
+      draftMode ===
+        "bright_required" &&
+      (
+        !Number.isFinite(
+          minLux,
+        ) ||
+        minLux <= 0
+      )
     ) {
-      setError(copy.invalidLux);
+      setError(
+        copy.invalidLux,
+      );
+
       return;
     }
 
-    setSavingAreaId(areaId);
+    setSaving(true);
     setError(null);
 
     try {
       await onUpdateZone(
-        areaId,
-        draft.mode,
-        Number.isFinite(minLux) && minLux > 0
+        editingZone.areaId,
+        draftMode,
+
+        Number.isFinite(minLux) &&
+          minLux > 0
           ? minLux
           : 500,
       );
 
-      setSavedAreaId(areaId);
-      setEditingAreaId(null);
+      setSavedAreaId(
+        editingZone.areaId,
+      );
+
+      setEditingZone(null);
     } catch {
-      setError(copy.saveError);
+      setError(
+        copy.saveError,
+      );
     } finally {
-      setSavingAreaId(null);
+      setSaving(false);
     }
   }
 
+
   return (
-    <aside
-      className="environment-sidebar"
-      aria-labelledby="environment-sidebar-title"
-    >
-      <header className="environment-sidebar-header">
-        <h2 id="environment-sidebar-title">{copy.title}</h2>
-        <p>{copy.subtitle}</p>
-      </header>
+    <>
+      <aside
+        className="environment-sidebar"
+        aria-labelledby="environment-sidebar-title"
+      >
+        <header className="environment-sidebar-header">
+          <h2
+            id="environment-sidebar-title"
+          >
+            {copy.title}
+          </h2>
 
-      {error && (
-        <div className="environment-sidebar-error" role="alert">
-          {error}
-        </div>
-      )}
+          <p>
+            {copy.subtitle}
+          </p>
+        </header>
 
-      {loading ? (
-        <p className="environment-sidebar-loading">
-          {copy.loading}
-        </p>
-      ) : (
-        <div className="environment-zone-list">
-          {zones.map((zone) => {
-            const draft = drafts[zone.areaId];
-            const editing = editingAreaId === zone.areaId;
-            const saving = savingAreaId === zone.areaId;
 
-            return (
-              <article
-                key={zone.areaId}
-                className={
-                  zone.warning
-                    ? "environment-zone-card environment-zone-card-warning"
-                    : "environment-zone-card"
-                }
-              >
-                <div className="environment-zone-top">
-                  <div>
-                    <span className="environment-zone-code">
-                      {zone.code}
+        {loading ? (
+          <p className="environment-sidebar-loading">
+            {copy.loading}
+          </p>
+        ) : (
+          <div className="environment-zone-list">
+            {zones.map(
+              (zone) => (
+                <article
+                  key={
+                    zone.areaId
+                  }
+                  className={
+                    zone.warning
+                      ? "environment-zone-card environment-zone-card-warning"
+                      : "environment-zone-card"
+                  }
+                >
+                  <div className="environment-zone-top">
+                    <div>
+                      <h3>
+                        {
+                          getZoneDisplayName(
+                            zone,
+                            language,
+                          )
+                        }
+                      </h3>
+                    </div>
+
+                    <span
+                      className={
+                        zone.warning
+                          ? "environment-zone-status warning"
+                          : "environment-zone-status"
+                      }
+                    >
+                      {
+                        zone.warning
+                          ? copy.tooDark
+                          : copy.normal
+                      }
                     </span>
-
-                    <h3>{zone.name}</h3>
                   </div>
 
-                  <span
-                    className={
-                      zone.warning
-                        ? "environment-zone-status warning"
-                        : "environment-zone-status"
-                    }
-                  >
-                    {zone.warning
-                      ? copy.tooDark
-                      : copy.normal}
-                  </span>
-                </div>
 
-                <div className="environment-compact-readings">
-                  <div>
-                    <strong>
-                      {zone.averageLux === null
-                        ? "—"
-                        : Math.round(zone.averageLux)}
-                    </strong>
-                    <span>Lux</span>
-                  </div>
-
-                  <div>
-                    <strong>
-                      {zone.averageTemperature === null
-                        ? "—"
-                        : zone.averageTemperature.toFixed(1)}
-                    </strong>
-                    <span>°C</span>
-                  </div>
-                </div>
-
-                <div className="environment-policy-row">
-                  <span>
-                    {zone.lightingMode === "bright_required"
-                      ? `${copy.bright} · ≥ ${zone.minLux} Lux`
-                      : copy.dark}
-                  </span>
-
-                  {role === "admin" && !editing && (
-                    <button
-                      type="button"
-                      className="environment-edit-button"
-                      onClick={() => startEditing(zone)}
-                    >
-                      {copy.edit}
-                    </button>
-                  )}
-                </div>
-
-                {zone.warning && (
-                  <div
-                    className="environment-warning"
-                    role="alert"
-                  >
-                    ⚠ {copy.warning}
-                  </div>
-                )}
-
-                {savedAreaId === zone.areaId && !editing && (
-                  <div className="environment-saved">
-                    ✓ {copy.saved}
-                  </div>
-                )}
-
-                {role === "admin" && editing && draft && (
-                  <div className="environment-editor">
-                    <h4>{copy.settings}</h4>
-
-                    <label
-                      className={
-                        draft.mode === "bright_required"
-                          ? "environment-choice selected"
-                          : "environment-choice"
-                      }
-                    >
-                      <input
-                        type="radio"
-                        name={`lighting-${zone.areaId}`}
-                        checked={
-                          draft.mode === "bright_required"
+                  <div className="environment-compact-readings">
+                    <div>
+                      <strong>
+                        {
+                          zone.averageLux ===
+                          null
+                            ? "—"
+                            : Math.round(
+                                zone.averageLux,
+                              )
                         }
-                        onChange={() =>
-                          updateDraft(zone.areaId, {
-                            mode: "bright_required",
-                          })
-                        }
-                      />
+                      </strong>
 
                       <span>
-                        <strong>{copy.bright}</strong>
-                        <small>{copy.brightHelp}</small>
+                        Lux
                       </span>
-                    </label>
+                    </div>
 
-                    <label
-                      className={
-                        draft.mode === "dark_allowed"
-                          ? "environment-choice selected"
-                          : "environment-choice"
-                      }
-                    >
-                      <input
-                        type="radio"
-                        name={`lighting-${zone.areaId}`}
-                        checked={
-                          draft.mode === "dark_allowed"
+                    <div>
+                      <strong>
+                        {
+                          zone.averageTemperature ===
+                          null
+                            ? "—"
+                            : zone.averageTemperature.toFixed(
+                                1,
+                              )
                         }
-                        onChange={() =>
-                          updateDraft(zone.areaId, {
-                            mode: "dark_allowed",
-                          })
-                        }
-                      />
+                      </strong>
 
                       <span>
-                        <strong>{copy.dark}</strong>
-                        <small>{copy.darkHelp}</small>
+                        °C
                       </span>
-                    </label>
-
-                    <label className="environment-min-lux">
-                      <span>{copy.minimum}</span>
-
-                      <div>
-                        <input
-                          type="number"
-                          min="1"
-                          step="10"
-                          disabled={
-                            draft.mode === "dark_allowed"
-                          }
-                          value={draft.minLux}
-                          onChange={(event) =>
-                            updateDraft(zone.areaId, {
-                              minLux: event.target.value,
-                            })
-                          }
-                        />
-
-                        <span>Lux</span>
-                      </div>
-                    </label>
-
-                    <div className="environment-editor-actions">
-                      <button
-                        type="button"
-                        className="environment-cancel-button"
-                        onClick={() => cancelEditing(zone)}
-                      >
-                        {copy.cancel}
-                      </button>
-
-                      <button
-                        type="button"
-                        className="environment-save-button"
-                        disabled={saving}
-                        onClick={() => void saveZone(zone.areaId)}
-                      >
-                        {saving ? copy.saving : copy.save}
-                      </button>
                     </div>
                   </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
-      )}
-    </aside>
+
+
+                  <div className="environment-policy-row">
+                    <span>
+                      {
+                        zone.lightingMode ===
+                        "bright_required"
+                          ? `${copy.bright} · ≥ ${zone.minLux} Lux`
+                          : copy.dark
+                      }
+                    </span>
+
+                    {
+                      role ===
+                        "admin" && (
+                        <button
+                          type="button"
+                          className="environment-edit-button"
+                          onClick={() =>
+                            openSettings(
+                              zone,
+                            )
+                          }
+                        >
+                          {
+                            copy.settingsButton
+                          }
+                        </button>
+                      )
+                    }
+                  </div>
+
+
+                  {
+                    zone.warning && (
+                      <div
+                        className="environment-warning"
+                        role="alert"
+                      >
+                        ⚠{" "}
+                        {
+                          copy.warning
+                        }
+                      </div>
+                    )
+                  }
+
+
+                  {
+                    savedAreaId ===
+                      zone.areaId && (
+                      <div className="environment-saved">
+                        ✓{" "}
+                        {
+                          copy.saved
+                        }
+                      </div>
+                    )
+                  }
+                </article>
+              ),
+            )}
+          </div>
+        )}
+      </aside>
+
+
+      {
+        role === "admin" &&
+        editingZone !== null && (
+          <div
+            className="settings-modal-backdrop"
+            onMouseDown={(
+              event,
+            ) => {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
+                closeSettings();
+              }
+            }}
+          >
+            <section
+              className="settings-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="settings-modal-title"
+            >
+              <header className="settings-modal-header">
+                <div>
+                  <span className="settings-modal-zone">
+                    {
+                      getZoneDisplayName(
+                        editingZone,
+                        language,
+                      )
+                    }
+                  </span>
+
+                  <h2
+                    id="settings-modal-title"
+                  >
+                    {
+                      copy.settings
+                    }
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  className="settings-modal-close"
+                  aria-label={
+                    copy.close
+                  }
+                  disabled={
+                    saving
+                  }
+                  onClick={
+                    closeSettings
+                  }
+                >
+                  ×
+                </button>
+              </header>
+
+
+              {
+                error !== null && (
+                  <div
+                    className="settings-modal-error"
+                    role="alert"
+                  >
+                    {error}
+                  </div>
+                )
+              }
+
+
+              <fieldset className="settings-mode-fieldset">
+                <legend>
+                  {
+                    copy.lightingPolicy
+                  }
+                </legend>
+
+
+                <label
+                  className={
+                    draftMode ===
+                    "bright_required"
+                      ? "environment-choice selected"
+                      : "environment-choice"
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="lighting-mode"
+                    checked={
+                      draftMode ===
+                      "bright_required"
+                    }
+                    disabled={
+                      saving
+                    }
+                    onChange={() => {
+                      setDraftMode(
+                        "bright_required",
+                      );
+
+                      setError(
+                        null,
+                      );
+                    }}
+                  />
+
+                  <span>
+                    <strong>
+                      {
+                        copy.bright
+                      }
+                    </strong>
+
+                    <small>
+                      {
+                        copy.brightHelp
+                      }
+                    </small>
+                  </span>
+                </label>
+
+
+                <label
+                  className={
+                    draftMode ===
+                    "dark_allowed"
+                      ? "environment-choice selected"
+                      : "environment-choice"
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="lighting-mode"
+                    checked={
+                      draftMode ===
+                      "dark_allowed"
+                    }
+                    disabled={
+                      saving
+                    }
+                    onChange={() => {
+                      setDraftMode(
+                        "dark_allowed",
+                      );
+
+                      setError(
+                        null,
+                      );
+                    }}
+                  />
+
+                  <span>
+                    <strong>
+                      {
+                        copy.dark
+                      }
+                    </strong>
+
+                    <small>
+                      {
+                        copy.darkHelp
+                      }
+                    </small>
+                  </span>
+                </label>
+              </fieldset>
+
+
+              <label className="environment-min-lux settings-min-lux">
+                <span>
+                  {
+                    copy.minimum
+                  }
+                </span>
+
+                <div>
+                  <input
+                    type="number"
+                    min="1"
+                    step="10"
+                    value={
+                      draftMinLux
+                    }
+                    disabled={
+                      draftMode ===
+                        "dark_allowed" ||
+                      saving
+                    }
+                    onChange={(
+                      event,
+                    ) => {
+                      setDraftMinLux(
+                        event
+                          .target
+                          .value,
+                      );
+
+                      setError(
+                        null,
+                      );
+                    }}
+                  />
+
+                  <span>
+                    Lux
+                  </span>
+                </div>
+              </label>
+
+
+              <div className="settings-modal-actions">
+                <button
+                  type="button"
+                  className="environment-cancel-button"
+                  disabled={
+                    saving
+                  }
+                  onClick={
+                    closeSettings
+                  }
+                >
+                  {
+                    copy.cancel
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  className="environment-save-button"
+                  disabled={
+                    saving
+                  }
+                  onClick={() =>
+                    void saveSettings()
+                  }
+                >
+                  {
+                    saving
+                      ? copy.saving
+                      : copy.save
+                  }
+                </button>
+              </div>
+            </section>
+          </div>
+        )
+      }
+    </>
   );
 }

@@ -1,0 +1,4454 @@
+/* =========================================================
+   Frutiger Aero visual layer
+   ---------------------------------------------------------
+   This file is intentionally loaded AFTER styles.css
+   and auth.css so it can override the existing visual
+   styling without changing application logic.
+   ========================================================= */
+
+
+/* =========================================================
+   Theme
+   ========================================================= */
+
+:root {
+  font-family:
+    "Segoe UI",
+    "Noto Sans Thai",
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  --page: #0aa982;
+
+  --surface:
+    rgb(18 72 61 / 86%);
+
+  --surface-soft:
+    rgb(43 101 86 / 74%);
+
+  --text:
+    #f5fbf8;
+
+  --muted:
+    #cce2da;
+
+  --border:
+    rgb(210 246 234 / 34%);
+
+  --accent:
+    #5de0aa;
+
+  --accent-soft:
+    rgb(93 224 170 / 22%);
+
+  --shadow:
+    0 10px 28px
+    rgb(0 55 42 / 36%);
+}
+
+
+:root[data-theme="night"] {
+  --page:
+    #073c36;
+
+  --surface:
+    rgb(10 46 42 / 92%);
+
+  --surface-soft:
+    rgb(24 66 58 / 88%);
+
+  --text:
+    #eefaf5;
+
+  --muted:
+    #b9d5cb;
+
+  --border:
+    rgb(175 225 208 / 25%);
+
+  --accent:
+    #65dcae;
+
+  --accent-soft:
+    rgb(70 187 143 / 22%);
+
+  --shadow:
+    0 12px 30px
+    rgb(0 0 0 / 38%);
+}
+
+
+/* =========================================================
+   Page background
+   ========================================================= */
+
+html {
+  min-height: 100%;
+
+  background:
+    var(--page);
+}
+
+
+body {
+  min-height: 100vh;
+
+  margin: 0;
+
+  color:
+    var(--text);
+
+  background:
+    radial-gradient(
+      ellipse at 50% -5%,
+      rgb(121 255 213 / 82%) 0%,
+      rgb(72 225 181 / 36%) 28%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse at 12% 78%,
+      rgb(0 91 79 / 72%) 0%,
+      transparent 48%
+    ),
+    linear-gradient(
+      135deg,
+      #15bfa3 0%,
+      #0cac80 48%,
+      #078061 100%
+    );
+
+  background-attachment:
+    fixed;
+}
+
+
+:root[data-theme="night"] body {
+  background:
+    radial-gradient(
+      ellipse at 50% -10%,
+      rgb(38 130 109 / 55%) 0%,
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 10% 80%,
+      rgb(0 27 26 / 82%) 0%,
+      transparent 52%
+    ),
+    linear-gradient(
+      135deg,
+      #0a6154 0%,
+      #084d42 46%,
+      #052e2b 100%
+    );
+
+  background-attachment:
+    fixed;
+}
+
+
+/* =========================================================
+   Decorative Aero background shapes
+   ========================================================= */
+
+.app-shell {
+  position: relative;
+
+  isolation: isolate;
+
+  min-height: 100vh;
+
+  overflow: hidden;
+}
+
+
+.app-shell::before {
+  content: "";
+
+  position: fixed;
+
+  z-index: -2;
+
+  width: 135vw;
+  height: 82vw;
+
+  top: -43vw;
+  left: -17vw;
+
+  border:
+    110px solid
+    rgb(100 255 208 / 13%);
+
+  border-radius:
+    50%;
+
+  transform:
+    rotate(-8deg);
+
+  pointer-events:
+    none;
+}
+
+
+.app-shell::after {
+  content: "";
+
+  position: fixed;
+
+  z-index: -1;
+
+  width: 120vw;
+  height: 43vw;
+
+  top: 27vh;
+  left: -10vw;
+
+  border:
+    4px solid
+    rgb(255 255 255 / 16%);
+
+  border-radius:
+    50%;
+
+  transform:
+    rotate(7deg);
+
+  filter:
+    blur(1px);
+
+  pointer-events:
+    none;
+}
+
+
+/* =========================================================
+   Header
+   ========================================================= */
+
+.app-header {
+  position: relative;
+
+  width:
+    min(
+      1340px,
+      calc(100% - 36px)
+    );
+
+  min-height: 74px;
+
+  margin:
+    24px auto 0;
+
+  padding:
+    12px 20px;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgb(215 247 236 / 36%);
+
+  border-radius:
+    16px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(149 185 175 / 80%) 0%,
+      rgb(75 122 108 / 82%) 20%,
+      rgb(17 78 65 / 93%) 53%,
+      rgb(11 67 56 / 91%) 100%
+    );
+
+  box-shadow:
+    0 8px 20px
+    rgb(0 55 43 / 38%),
+    inset 0 1px 0
+    rgb(255 255 255 / 42%);
+
+  backdrop-filter:
+    blur(12px)
+    saturate(125%);
+
+  -webkit-backdrop-filter:
+    blur(12px)
+    saturate(125%);
+}
+
+
+.app-header::before {
+  content: "";
+
+  position: absolute;
+
+  top: 1px;
+  left: 12px;
+  right: 12px;
+
+  height: 27px;
+
+  border-radius:
+    14px 14px 55% 55%;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 23%),
+      transparent
+    );
+
+  pointer-events:
+    none;
+}
+
+
+.brand {
+  position: relative;
+
+  z-index: 1;
+}
+
+
+.brand h1 {
+  margin: 0;
+
+  color:
+    #f7fcfa;
+
+  font-size:
+    clamp(
+      22px,
+      2vw,
+      29px
+    );
+
+  font-weight: 300;
+
+  line-height: 1.1;
+
+  letter-spacing:
+    0.01em;
+
+  text-shadow:
+    0 1px 2px
+    rgb(0 0 0 / 65%);
+}
+
+
+.brand p {
+  margin:
+    5px 0 0;
+
+  color:
+    #dcebe5;
+
+  font-size:
+    13px;
+
+  font-weight:
+    400;
+
+  text-shadow:
+    0 1px 1px
+    rgb(0 0 0 / 60%);
+}
+
+
+/* =========================================================
+   Header controls
+   ========================================================= */
+
+.header-controls {
+  position: relative;
+
+  z-index: 1;
+}
+
+
+.language-toggle,
+.theme-toggle,
+.role-badge {
+  border:
+    1px solid
+    rgb(210 244 233 / 26%);
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 15%),
+      rgb(3 44 37 / 26%)
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 18%),
+    0 2px 5px
+    rgb(0 35 27 / 20%);
+}
+
+
+.language-toggle button {
+  color:
+    #d4e7df;
+
+  text-shadow:
+    0 1px 1px
+    rgb(0 0 0 / 45%);
+}
+
+
+.language-toggle button.active {
+  color:
+    white;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #6ce7b5,
+      #27aa78
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 40%),
+    0 1px 4px
+    rgb(0 30 20 / 35%);
+}
+
+
+.theme-toggle {
+  color:
+    #f3faf7;
+}
+
+
+.role-badge {
+  color:
+    #f2faf6;
+}
+
+
+.role-badge.admin {
+  color:
+    #dffff1;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(91 226 170 / 36%),
+      rgb(15 104 72 / 44%)
+    );
+}
+
+
+.header-auth-button {
+  color:
+    #a9f0d1;
+
+  text-shadow:
+    0 1px 1px
+    rgb(0 0 0 / 45%);
+}
+
+
+/* =========================================================
+   Main layout
+   ========================================================= */
+
+.main-content {
+  width:
+    min(
+      1340px,
+      calc(100% - 36px)
+    );
+
+  margin:
+    18px auto 60px;
+}
+
+
+/* =========================================================
+   Glass panels
+   ========================================================= */
+
+.room-card,
+.environment-sidebar {
+  position: relative;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgb(211 244 233 / 30%);
+
+  border-radius:
+    16px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgb(112 157 144 / 76%) 0%,
+      rgb(28 83 70 / 89%) 11%,
+      rgb(13 67 56 / 88%) 100%
+    );
+
+  box-shadow:
+    0 10px 25px
+    rgb(0 49 38 / 36%),
+    inset 0 1px 0
+    rgb(255 255 255 / 31%);
+
+  backdrop-filter:
+    blur(10px)
+    saturate(120%);
+
+  -webkit-backdrop-filter:
+    blur(10px)
+    saturate(120%);
+}
+
+
+.room-card::before,
+.environment-sidebar::before {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  top: 1px;
+  left: 12px;
+  right: 12px;
+
+  height: 24px;
+
+  border-radius:
+    14px 14px 55% 55%;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 20%),
+      transparent
+    );
+
+  pointer-events:
+    none;
+}
+
+
+.room-card > *,
+.environment-sidebar > * {
+  position: relative;
+
+  z-index: 1;
+}
+
+
+/* =========================================================
+   Room layout
+   ========================================================= */
+
+.room-card-plan {
+  padding:
+    14px;
+}
+
+
+.room-plan-figure {
+  margin: 0;
+}
+
+
+.map-container {
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio:
+    1295 / 825;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgb(230 249 243 / 38%);
+
+  border-radius:
+    11px;
+
+  background:
+    rgb(242 248 245 / 94%);
+
+  box-shadow:
+    inset 0 1px 5px
+    rgb(0 50 38 / 22%),
+    0 2px 5px
+    rgb(0 36 27 / 18%);
+}
+
+
+.room-map {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit:
+    contain;
+
+  user-select:
+    none;
+}
+
+
+:root[data-theme="night"]
+.room-map {
+  filter:
+    brightness(1.04)
+    contrast(0.96);
+
+  opacity:
+    0.96;
+}
+
+
+.room-map-meta-simple {
+  display: flex;
+
+  justify-content:
+    flex-end;
+
+  margin-top:
+    8px;
+}
+
+
+.not-to-scale {
+  color:
+    var(--muted);
+
+  font-size:
+    11px;
+
+  font-style:
+    italic;
+
+  text-shadow:
+    0 1px 1px
+    rgb(0 0 0 / 35%);
+}
+
+
+.room-map-fallback {
+  position: absolute;
+
+  inset: 0;
+
+  display: flex;
+
+  flex-direction:
+    column;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap: 7px;
+
+  padding: 20px;
+
+  color:
+    #29483e;
+
+  text-align:
+    center;
+}
+
+
+.room-map-fallback strong {
+  font-size:
+    16px;
+}
+
+
+.room-map-fallback span {
+  color:
+    #557268;
+
+  font-size:
+    12px;
+}
+
+
+/* =========================================================
+   Digital Twin + sidebar
+   ========================================================= */
+
+.digital-twin-layout {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(300px, 340px);
+
+  align-items:
+    start;
+
+  gap:
+    18px;
+}
+
+
+/*
+ * IMPORTANT:
+ *
+ * The old stylesheet uses:
+ *
+ * position: sticky;
+ * top: 18px;
+ *
+ * This overrides it.
+ *
+ * The sidebar now stays aligned with the room panel and
+ * scrolls normally with the page. It no longer follows
+ * the viewport while scrolling.
+ */
+.environment-sidebar {
+  position:
+    static !important;
+
+  top:
+    auto !important;
+
+  align-self:
+    start;
+
+  padding:
+    18px;
+}
+
+
+/* =========================================================
+   Sidebar title
+   ========================================================= */
+
+.environment-sidebar-header {
+  margin-bottom:
+    15px;
+}
+
+
+.environment-sidebar-header h2 {
+  margin: 0;
+
+  color:
+    #f7fcfa;
+
+  font-size:
+    22px;
+
+  font-weight:
+    300;
+
+  text-shadow:
+    0 1px 2px
+    rgb(0 0 0 / 55%);
+}
+
+
+.environment-sidebar-header p {
+  margin:
+    5px 0 0;
+
+  color:
+    var(--muted);
+
+  font-size:
+    12px;
+
+  line-height:
+    1.45;
+}
+
+
+/* =========================================================
+   Area cards
+   ========================================================= */
+
+.environment-zone-list {
+  display: grid;
+
+  gap:
+    11px;
+}
+
+
+.environment-zone-card {
+  padding:
+    14px;
+
+  border:
+    1px solid
+    rgb(205 240 228 / 24%);
+
+  border-radius:
+    11px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(119 166 151 / 28%),
+      rgb(5 52 44 / 31%)
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 15%),
+    0 3px 8px
+    rgb(0 33 26 / 20%);
+
+  transition:
+    border-color 150ms ease,
+    filter 150ms ease;
+}
+
+
+.environment-zone-card:hover {
+  border-color:
+    rgb(173 245 217 / 40%);
+}
+
+
+.environment-zone-card-warning {
+  border-color:
+    rgb(255 193 91 / 72%);
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(180 133 53 / 25%),
+      rgb(75 59 26 / 28%)
+    );
+}
+
+
+.environment-zone-code {
+  color:
+    #b9d9ce;
+
+  font-size:
+    10px;
+
+  font-weight:
+    700;
+
+  letter-spacing:
+    0.06em;
+}
+
+
+.environment-zone-card h3 {
+  color:
+    #ffffff;
+
+  font-size:
+    16px;
+
+  font-weight:
+    400;
+
+  text-shadow:
+    0 1px 1px
+    rgb(0 0 0 / 45%);
+}
+
+
+/* =========================================================
+   Status pill
+   ========================================================= */
+
+.environment-zone-status {
+  border:
+    1px solid
+    rgb(157 243 205 / 25%);
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(103 233 179 / 28%),
+      rgb(17 116 79 / 35%)
+    );
+
+  color:
+    #ddfff0;
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 16%);
+}
+
+
+.environment-zone-status.warning,
+.environment-zone-status-warning {
+  border-color:
+    rgb(255 205 125 / 36%);
+
+  background:
+    linear-gradient(
+      to bottom,
+      #e0a14c,
+      #9e641f
+    );
+
+  color:
+    #fff7e8;
+}
+
+
+/* =========================================================
+   Lux + Temperature
+   ========================================================= */
+
+.environment-compact-readings {
+  display: grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  gap:
+    8px;
+
+  margin-top:
+    12px;
+}
+
+
+.environment-compact-readings > div {
+  display: flex;
+
+  align-items:
+    baseline;
+
+  gap:
+    5px;
+
+  padding:
+    9px 10px;
+
+  border:
+    1px solid
+    rgb(204 238 227 / 18%);
+
+  border-radius:
+    8px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(1 41 35 / 30%),
+      rgb(3 55 45 / 18%)
+    );
+
+  box-shadow:
+    inset 0 1px 3px
+    rgb(0 24 20 / 28%);
+}
+
+
+.environment-compact-readings strong {
+  color:
+    #ffffff;
+
+  font-size:
+    21px;
+
+  font-weight:
+    400;
+
+  text-shadow:
+    0 1px 1px
+    rgb(0 0 0 / 55%);
+}
+
+
+.environment-compact-readings span {
+  color:
+    #bdd9cf;
+
+  font-size:
+    11px;
+}
+
+
+/* =========================================================
+   Area policy
+   ========================================================= */
+
+.environment-policy-row {
+  margin-top:
+    10px;
+
+  color:
+    #c6ddd5;
+
+  font-size:
+    11px;
+}
+
+
+.environment-edit-button {
+  min-height:
+    34px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid
+    rgb(200 238 225 / 25%);
+
+  border-radius:
+    8px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 15%),
+      rgb(0 38 31 / 18%)
+    );
+
+  color:
+    #ebf8f3;
+
+  cursor:
+    pointer;
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 15%);
+}
+
+
+.environment-edit-button:hover {
+  border-color:
+    #65dcae;
+
+  filter:
+    brightness(1.12);
+}
+
+
+/* =========================================================
+   Warning
+   ========================================================= */
+
+.environment-warning {
+  margin-top:
+    10px;
+
+  padding:
+    9px 10px;
+
+  border:
+    1px solid
+    rgb(255 194 96 / 58%);
+
+  border-radius:
+    8px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(255 203 111 / 25%),
+      rgb(128 78 10 / 22%)
+    );
+
+  color:
+    #fff1cb;
+
+  font-size:
+    11px;
+
+  font-weight:
+    700;
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 16%);
+}
+
+
+.environment-saved {
+  color:
+    #91f0c5;
+}
+
+
+/* =========================================================
+   Admin editor
+   ========================================================= */
+
+.environment-editor {
+  border-top:
+    1px solid
+    rgb(211 241 231 / 18%);
+}
+
+
+.environment-editor h4 {
+  color:
+    #f3fbf7;
+
+  font-weight:
+    400;
+}
+
+
+.environment-choice {
+  border:
+    1px solid
+    rgb(203 238 227 / 22%);
+
+  background:
+    rgb(1 46 38 / 23%);
+
+  color:
+    #edf9f4;
+}
+
+
+.environment-choice.selected {
+  border-color:
+    #67deb0;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(95 225 172 / 23%),
+      rgb(14 95 70 / 27%)
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 15%);
+}
+
+
+.environment-choice input {
+  accent-color:
+    #42c58f;
+}
+
+
+.environment-choice small {
+  color:
+    #bad6cc;
+}
+
+
+.environment-min-lux {
+  color:
+    #eaf7f2;
+}
+
+
+.environment-min-lux input {
+  border:
+    1px solid
+    rgb(207 241 230 / 28%);
+
+  background:
+    rgb(0 43 36 / 35%);
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    inset 0 1px 3px
+    rgb(0 0 0 / 22%);
+}
+
+
+/* =========================================================
+   Glossy buttons
+   ========================================================= */
+
+.environment-save-button,
+.login-submit-button,
+.refresh-button {
+  border:
+    1px solid
+    rgb(191 247 222 / 37%);
+
+  border-radius:
+    8px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #70ebb8 0%,
+      #32b683 46%,
+      #17805c 52%,
+      #19966b 100%
+    );
+
+  color:
+    #ffffff;
+
+  cursor:
+    pointer;
+
+  font-weight:
+    700;
+
+  text-shadow:
+    0 1px 1px
+    rgb(0 50 35 / 75%);
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 48%),
+    0 2px 5px
+    rgb(0 30 20 / 30%);
+}
+
+
+.environment-save-button:hover,
+.login-submit-button:hover,
+.refresh-button:hover {
+  filter:
+    brightness(1.12)
+    saturate(1.08);
+}
+
+
+.environment-cancel-button {
+  border:
+    1px solid
+    rgb(207 239 229 / 23%);
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 15%),
+      rgb(0 37 31 / 22%)
+    );
+
+  color:
+    #f0faf6;
+
+  box-shadow:
+    inset 0 1px 0
+    rgb(255 255 255 / 16%);
+}
+
+
+/* =========================================================
+   Login modal
+   ========================================================= */
+
+.modal-backdrop {
+  background:
+    rgb(0 37 29 / 55%);
+
+  backdrop-filter:
+    blur(7px);
+
+  -webkit-backdrop-filter:
+    blur(7px);
+}
+
+
+.login-modal {
+  position:
+    relative;
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid
+    rgb(214 247 236 / 34%);
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(100 148 134 / 92%),
+      rgb(17 72 60 / 96%) 15%,
+      rgb(10 57 49 / 96%)
+    );
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    0 20px 60px
+    rgb(0 25 20 / 55%),
+    inset 0 1px 0
+    rgb(255 255 255 / 28%);
+}
+
+
+.login-modal::before {
+  content: "";
+
+  position:
+    absolute;
+
+  top: 1px;
+  left: 10px;
+  right: 10px;
+
+  height:
+    25px;
+
+  border-radius:
+    13px 13px 50% 50%;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 20%),
+      transparent
+    );
+
+  pointer-events:
+    none;
+}
+
+
+.login-modal-header,
+.login-form {
+  position:
+    relative;
+
+  z-index:
+    1;
+}
+
+
+.login-modal-header h2 {
+  color:
+    #ffffff;
+
+  font-weight:
+    300;
+}
+
+
+.login-modal-header p,
+.auth-field span {
+  color:
+    #cce2da;
+}
+
+
+.modal-close-button {
+  border:
+    1px solid
+    rgb(210 241 231 / 25%);
+
+  background:
+    rgb(0 43 35 / 25%);
+
+  color:
+    #d6e9e2;
+}
+
+
+.auth-field input {
+  border:
+    1px solid
+    rgb(213 243 233 / 27%);
+
+  background:
+    rgb(1 42 35 / 32%);
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    inset 0 1px 3px
+    rgb(0 0 0 / 22%);
+}
+
+
+.auth-field input:focus {
+  border-color:
+    #63dfae;
+
+  box-shadow:
+    0 0 0 3px
+    rgb(95 225 171 / 18%),
+    inset 0 1px 3px
+    rgb(0 0 0 / 20%);
+}
+
+
+/* =========================================================
+   Error states
+   ========================================================= */
+
+.environment-sidebar-error,
+.auth-error,
+.lighting-error {
+  border:
+    1px solid
+    rgb(255 159 159 / 42%);
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(195 71 71 / 30%),
+      rgb(111 30 30 / 30%)
+    );
+
+  color:
+    #ffe2e2;
+}
+
+
+/* =========================================================
+   Focus
+   ========================================================= */
+
+button:focus-visible,
+input:focus-visible {
+  outline:
+    3px solid
+    rgb(113 236 188 / 42%);
+
+  outline-offset:
+    2px;
+}
+
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (
+  max-width: 1000px
+) {
+  .digital-twin-layout {
+    grid-template-columns:
+      1fr;
+  }
+
+  .environment-sidebar {
+    position:
+      static !important;
+
+    top:
+      auto !important;
+  }
+}
+
+
+@media (
+  max-width: 760px
+) {
+  .app-header {
+    width:
+      calc(100% - 20px);
+
+    margin-top:
+      10px;
+
+    border-radius:
+      13px;
+  }
+
+  .main-content {
+    width:
+      calc(100% - 20px);
+
+    margin-top:
+      10px;
+  }
+
+  .room-card,
+  .environment-sidebar {
+    border-radius:
+      13px;
+  }
+
+  .environment-zone-list {
+    grid-template-columns:
+      1fr;
+  }
+}
+
+
+@media (
+  max-width: 620px
+) {
+  .app-header {
+    padding:
+      14px;
+  }
+
+  .brand h1 {
+    font-size:
+      23px;
+  }
+
+  .brand p {
+    font-size:
+      12px;
+  }
+
+  .room-card-plan {
+    padding:
+      9px;
+  }
+
+  .map-container {
+    border-radius:
+      8px;
+  }
+}
+
+/* =========================================================
+   PERFORMANCE OPTIMIZATION
+   Keep the Frutiger Aero look without expensive GPU effects
+   ========================================================= */
+
+
+/* 1. Don't repaint the whole page background while scrolling */
+body,
+:root[data-theme="night"] body {
+  background-attachment: scroll;
+}
+
+
+/* 2. Real backdrop blur is expensive.
+   The gradients already create the glass appearance. */
+.app-header,
+.room-card,
+.environment-sidebar,
+.login-modal,
+.modal-backdrop {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+
+/* 3. Simplify the giant decorative background shapes */
+.app-shell::before {
+  position: absolute;
+
+  inset: 0;
+
+  width: auto;
+  height: auto;
+
+  border: 0;
+
+  border-radius: 0;
+
+  transform: none;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 15%,
+      rgb(110 255 210 / 16%),
+      transparent 52%
+    );
+
+  pointer-events: none;
+}
+
+
+/* The second giant shape costs extra paint work.
+   Remove it completely. */
+.app-shell::after {
+  display: none;
+}
+
+
+/* 4. Lighter Aero shadows */
+.app-header {
+  box-shadow:
+    0 5px 12px rgb(0 55 43 / 26%),
+    inset 0 1px 0 rgb(255 255 255 / 32%);
+}
+
+
+.room-card,
+.environment-sidebar {
+  box-shadow:
+    0 6px 16px rgb(0 49 38 / 25%),
+    inset 0 1px 0 rgb(255 255 255 / 24%);
+}
+
+
+.environment-zone-card {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 12%),
+    0 2px 5px rgb(0 33 26 / 15%);
+}
+
+
+/* 5. Avoid expensive filter animation on every hover */
+.environment-zone-card:hover {
+  filter: none;
+
+  border-color:
+    rgb(173 245 217 / 40%);
+}
+
+
+.environment-save-button:hover,
+.login-submit-button:hover,
+.refresh-button:hover {
+  filter: none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #7cf0c0 0%,
+      #3ac28d 46%,
+      #198a63 52%,
+      #1da276 100%
+    );
+}
+
+
+/* 6. Prevent unnecessary room image filter recalculation */
+.room-map {
+  transition: none;
+}
+
+
+/* 7. Reduce theme transition work */
+html,
+body,
+.room-card,
+.environment-sidebar {
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+
+/* 8. Respect users/devices requesting reduced animation */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* =========================================================
+   MODERN FRUTIGER AERO
+   ---------------------------------------------------------
+   Paste this at the VERY BOTTOM of aero.css.
+
+   Goal:
+   - keep the green / aqua Aero identity
+   - reduce the "2000s website" appearance
+   - make cards cleaner and more dashboard-like
+   - integrate the floor plan into the theme
+   ========================================================= */
+
+
+/* =========================================================
+   Modern palette
+   ========================================================= */
+
+:root {
+  --page: #0f9f83;
+
+  --surface:
+    rgb(13 75 65 / 88%);
+
+  --surface-soft:
+    rgb(28 93 80 / 72%);
+
+  --text:
+    #f4fbf8;
+
+  --muted:
+    #bdd7ce;
+
+  --border:
+    rgb(206 243 231 / 20%);
+
+  --accent:
+    #52d8a2;
+
+  --accent-hover:
+    #65e3b1;
+
+  --accent-soft:
+    rgb(82 216 162 / 15%);
+
+  --shadow:
+    0 12px 32px
+    rgb(0 42 34 / 18%);
+}
+
+
+:root[data-theme="night"] {
+  --page:
+    #073f38;
+
+  --surface:
+    rgb(8 54 48 / 94%);
+
+  --surface-soft:
+    rgb(19 70 61 / 84%);
+
+  --text:
+    #f2faf7;
+
+  --muted:
+    #b8d2ca;
+
+  --border:
+    rgb(199 235 224 / 17%);
+
+  --accent:
+    #63d9a9;
+
+  --accent-hover:
+    #78e6b9;
+
+  --accent-soft:
+    rgb(99 217 169 / 14%);
+
+  --shadow:
+    0 14px 34px
+    rgb(0 0 0 / 25%);
+}
+
+
+/* =========================================================
+   Background
+   Cleaner than the strong retro version.
+   ========================================================= */
+
+body {
+  background:
+    radial-gradient(
+      circle at 18% 5%,
+      rgb(118 241 205 / 24%),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 85% 35%,
+      rgb(50 208 175 / 18%),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      #12a98d 0%,
+      #0c8f75 48%,
+      #08715f 100%
+    );
+
+  background-attachment:
+    scroll;
+}
+
+
+:root[data-theme="night"] body {
+  background:
+    radial-gradient(
+      circle at 18% 5%,
+      rgb(69 177 147 / 17%),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 88% 35%,
+      rgb(36 143 124 / 14%),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      #075a4e 0%,
+      #06483f 48%,
+      #05332f 100%
+    );
+}
+
+
+/* Remove the large retro rings */
+.app-shell::before,
+.app-shell::after {
+  display:
+    none;
+}
+
+
+/* =========================================================
+   Typography
+   Less glow = more modern.
+   ========================================================= */
+
+body {
+  font-family:
+    "Segoe UI",
+    "Noto Sans Thai",
+    Tahoma,
+    Arial,
+    sans-serif;
+}
+
+
+.brand h1,
+.environment-sidebar-header h2,
+.login-modal-header h2 {
+  text-shadow:
+    none;
+}
+
+
+.brand h1 {
+  font-weight:
+    500;
+
+  letter-spacing:
+    -0.02em;
+}
+
+
+.brand p {
+  color:
+    var(--muted);
+
+  text-shadow:
+    none;
+}
+
+
+/* =========================================================
+   Header
+   Glass, but no heavy Vista toolbar look.
+   ========================================================= */
+
+.app-header {
+  min-height:
+    72px;
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid
+    rgb(220 249 239 / 20%);
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgb(23 100 84 / 91%),
+      rgb(10 69 59 / 91%)
+    );
+
+  box-shadow:
+    0 10px 28px
+    rgb(0 45 36 / 18%),
+    inset 0 1px 0
+    rgb(255 255 255 / 12%);
+}
+
+
+/*
+ * Keep ONE tiny Aero highlight instead of the
+ * thick curved highlight from the old theme.
+ */
+.app-header::before {
+  height:
+    1px;
+
+  top:
+    0;
+
+  left:
+    20px;
+
+  right:
+    20px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgb(255 255 255 / 25%);
+}
+
+
+/* =========================================================
+   Main cards
+   ========================================================= */
+
+.room-card,
+.environment-sidebar {
+  overflow:
+    hidden;
+
+  border:
+    1px solid
+    rgb(217 246 236 / 18%);
+
+  border-radius:
+    20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgb(20 92 78 / 91%),
+      rgb(9 67 58 / 91%)
+    );
+
+  box-shadow:
+    0 14px 34px
+    rgb(0 42 34 / 17%),
+    inset 0 1px 0
+    rgb(255 255 255 / 10%);
+}
+
+
+/* Remove big glossy cap */
+.room-card::before,
+.environment-sidebar::before {
+  height:
+    1px;
+
+  top:
+    0;
+
+  left:
+    24px;
+
+  right:
+    24px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgb(255 255 255 / 20%);
+}
+
+
+/* =========================================================
+   FLOOR PLAN
+   Modern "digital blueprint" treatment
+   ========================================================= */
+
+.room-card-plan {
+  padding:
+    12px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgb(18 89 76 / 93%),
+      rgb(8 66 57 / 93%)
+    );
+}
+
+
+/*
+ * Instead of a plain white box, the diagram now sits
+ * on a cool mint / blueprint-like surface.
+ */
+.map-container {
+  position:
+    relative;
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid
+    rgb(208 239 230 / 34%);
+
+  border-radius:
+    16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #eef8f4 0%,
+      #e2f2ed 100%
+    );
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgb(255 255 255 / 62%),
+    inset 0 0 28px
+    rgb(50 135 111 / 7%);
+}
+
+
+/*
+ * Very subtle grid makes it feel like an engineering
+ * digital-twin canvas rather than a sheet of paper.
+ */
+.map-container::before {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  z-index:
+    0;
+
+  pointer-events:
+    none;
+
+  background-image:
+    linear-gradient(
+      rgb(36 128 105 / 4%) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgb(36 128 105 / 4%) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    28px 28px;
+}
+
+
+.room-map {
+  position:
+    relative;
+
+  z-index:
+    1;
+
+  filter:
+    saturate(0.92)
+    contrast(0.98);
+
+  opacity:
+    0.97;
+}
+
+
+/*
+ * Tiny corner glow.
+ * Gives the plan an Aero feel without making
+ * the architectural drawing harder to read.
+ */
+.map-container::after {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  z-index:
+    2;
+
+  top:
+    -120px;
+
+  right:
+    -100px;
+
+  width:
+    300px;
+
+  height:
+    300px;
+
+  border-radius:
+    50%;
+
+  pointer-events:
+    none;
+
+  background:
+    radial-gradient(
+      circle,
+      rgb(73 209 167 / 11%),
+      transparent 67%
+    );
+}
+
+
+.room-map-meta-simple {
+  padding:
+    0 4px;
+
+  margin-top:
+    8px;
+}
+
+
+.not-to-scale {
+  color:
+    #b9d5cc;
+
+  font-size:
+    11px;
+
+  font-style:
+    normal;
+
+  letter-spacing:
+    0.01em;
+
+  text-shadow:
+    none;
+}
+
+
+/* =========================================================
+   Environment sidebar
+   ========================================================= */
+
+.environment-sidebar {
+  padding:
+    18px;
+
+  position:
+    static !important;
+
+  top:
+    auto !important;
+}
+
+
+.environment-sidebar-header h2 {
+  color:
+    #f5fbf8;
+
+  font-size:
+    20px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    -0.015em;
+}
+
+
+.environment-sidebar-header p {
+  color:
+    var(--muted);
+}
+
+
+/* =========================================================
+   Area cards
+   ========================================================= */
+
+.environment-zone-card {
+  border:
+    1px solid
+    rgb(215 244 234 / 13%);
+
+  border-radius:
+    14px;
+
+  background:
+    rgb(255 255 255 / 5%);
+
+  box-shadow:
+    none;
+}
+
+
+.environment-zone-card:hover {
+  border-color:
+    rgb(116 227 189 / 28%);
+
+  background:
+    rgb(255 255 255 / 7%);
+}
+
+
+.environment-zone-card-warning {
+  border-color:
+    rgb(245 184 88 / 50%);
+
+  background:
+    rgb(143 94 20 / 15%);
+}
+
+
+.environment-zone-card h3 {
+  font-weight:
+    500;
+
+  text-shadow:
+    none;
+}
+
+
+/* =========================================================
+   Status
+   Flat modern pills instead of glossy buttons.
+   ========================================================= */
+
+.environment-zone-status {
+  border:
+    1px solid
+    rgb(106 228 185 / 17%);
+
+  background:
+    rgb(77 207 158 / 12%);
+
+  color:
+    #bff2dc;
+
+  box-shadow:
+    none;
+}
+
+
+.environment-zone-status.warning,
+.environment-zone-status-warning {
+  border-color:
+    rgb(245 188 97 / 30%);
+
+  background:
+    rgb(219 151 55 / 16%);
+
+  color:
+    #ffdaa1;
+}
+
+
+/* =========================================================
+   Lux / Temperature boxes
+   ========================================================= */
+
+.environment-compact-readings > div {
+  border:
+    1px solid
+    rgb(215 244 234 / 10%);
+
+  border-radius:
+    11px;
+
+  background:
+    rgb(0 31 27 / 17%);
+
+  box-shadow:
+    none;
+}
+
+
+.environment-compact-readings strong {
+  font-weight:
+    500;
+
+  text-shadow:
+    none;
+}
+
+
+/* =========================================================
+   Buttons
+   This is one of the biggest "modernization" changes.
+   ========================================================= */
+
+.environment-save-button,
+.login-submit-button,
+.refresh-button {
+  border:
+    1px solid
+    rgb(143 239 202 / 27%);
+
+  border-radius:
+    11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #45d29b,
+      #24ab7d
+    );
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    0 6px 16px
+    rgb(0 49 36 / 16%);
+
+  text-shadow:
+    none;
+
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+
+.environment-save-button:hover,
+.login-submit-button:hover,
+.refresh-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #54dcaa,
+      #2ab687
+    );
+
+  box-shadow:
+    0 8px 20px
+    rgb(0 49 36 / 20%);
+
+  transform:
+    translateY(-1px);
+}
+
+
+.environment-save-button:active,
+.login-submit-button:active,
+.refresh-button:active {
+  transform:
+    translateY(0);
+}
+
+
+.environment-edit-button,
+.environment-cancel-button {
+  border:
+    1px solid
+    rgb(213 244 233 / 15%);
+
+  border-radius:
+    10px;
+
+  background:
+    rgb(255 255 255 / 5%);
+
+  color:
+    #eaf7f2;
+
+  box-shadow:
+    none;
+}
+
+
+.environment-edit-button:hover,
+.environment-cancel-button:hover {
+  background:
+    rgb(255 255 255 / 8%);
+
+  border-color:
+    rgb(103 220 179 / 32%);
+}
+
+
+/* =========================================================
+   Language / theme controls
+   ========================================================= */
+
+.language-toggle,
+.theme-toggle,
+.role-badge {
+  border:
+    1px solid
+    rgb(215 244 234 / 13%);
+
+  background:
+    rgb(255 255 255 / 5%);
+
+  box-shadow:
+    none;
+}
+
+
+.language-toggle button.active {
+  background:
+    rgb(89 217 170 / 17%);
+
+  color:
+    #d8f8ea;
+
+  box-shadow:
+    none;
+}
+
+
+/* =========================================================
+   LOGIN MODAL
+   Modern glass rather than Vista dialog.
+   ========================================================= */
+
+.modal-backdrop {
+  background:
+    rgb(2 31 27 / 58%);
+
+  backdrop-filter:
+    none;
+
+  -webkit-backdrop-filter:
+    none;
+}
+
+
+.login-modal {
+  overflow:
+    hidden;
+
+  padding:
+    24px;
+
+  border:
+    1px solid
+    rgb(215 246 235 / 18%);
+
+  border-radius:
+    22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #145e51,
+      #0a493f
+    );
+
+  box-shadow:
+    0 26px 70px
+    rgb(0 25 21 / 35%),
+    inset 0 1px 0
+    rgb(255 255 255 / 10%);
+}
+
+
+/* Remove the huge retro glossy dome */
+.login-modal::before {
+  height:
+    1px;
+
+  top:
+    0;
+
+  left:
+    28px;
+
+  right:
+    28px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgb(255 255 255 / 20%);
+}
+
+
+.login-modal-header {
+  align-items:
+    center;
+
+  margin-bottom:
+    22px;
+}
+
+
+.login-modal-header h2 {
+  min-height:
+    0;
+
+  margin:
+    0;
+
+  color:
+    #f5fbf8;
+
+  font-size:
+    23px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    -0.02em;
+}
+
+
+.modal-close-button {
+  width:
+    38px;
+
+  height:
+    38px;
+
+  border:
+    1px solid
+    rgb(215 245 235 / 15%);
+
+  border-radius:
+    11px;
+
+  background:
+    rgb(255 255 255 / 5%);
+
+  color:
+    #d9ebe5;
+
+  box-shadow:
+    none;
+
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+
+.modal-close-button:hover:not(:disabled) {
+  border-color:
+    rgb(126 226 190 / 35%);
+
+  background:
+    rgb(255 255 255 / 9%);
+
+  color:
+    #ffffff;
+}
+
+
+/* =========================================================
+   Login fields
+   ========================================================= */
+
+.login-form {
+  gap:
+    16px;
+}
+
+
+.auth-field {
+  gap:
+    7px;
+}
+
+
+.auth-field span {
+  color:
+    #d1e4dd;
+
+  font-size:
+    12px;
+
+  font-weight:
+    600;
+}
+
+
+.auth-field input {
+  height:
+    48px;
+
+  padding:
+    0 14px;
+
+  border:
+    1px solid
+    rgb(212 243 232 / 18%);
+
+  border-radius:
+    12px;
+
+  background:
+    rgb(1 43 37 / 30%);
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    none;
+
+  font-size:
+    15px;
+}
+
+
+.auth-field input:hover:not(:disabled) {
+  border-color:
+    rgb(119 222 186 / 28%);
+}
+
+
+.auth-field input:focus {
+  border-color:
+    #55d6a3;
+
+  box-shadow:
+    0 0 0 3px
+    rgb(85 214 163 / 13%);
+}
+
+
+.login-submit-button {
+  height:
+    48px;
+
+  margin-top:
+    4px;
+
+  font-size:
+    14px;
+
+  font-weight:
+    650;
+}
+
+
+/* =========================================================
+   Admin settings
+   ========================================================= */
+
+.environment-choice {
+  border:
+    1px solid
+    rgb(211 241 231 / 13%);
+
+  border-radius:
+    11px;
+
+  background:
+    rgb(255 255 255 / 4%);
+}
+
+
+.environment-choice.selected {
+  border-color:
+    rgb(90 219 170 / 35%);
+
+  background:
+    rgb(90 219 170 / 10%);
+
+  box-shadow:
+    none;
+}
+
+
+.environment-min-lux input {
+  border:
+    1px solid
+    rgb(211 241 231 / 15%);
+
+  border-radius:
+    10px;
+
+  background:
+    rgb(0 40 34 / 24%);
+
+  box-shadow:
+    none;
+}
+
+
+/* =========================================================
+   Warning
+   ========================================================= */
+
+.environment-warning {
+  border:
+    1px solid
+    rgb(246 184 87 / 34%);
+
+  background:
+    rgb(195 125 30 / 13%);
+
+  color:
+    #ffe1ae;
+
+  box-shadow:
+    none;
+}
+
+
+/* =========================================================
+   Error
+   ========================================================= */
+
+.environment-sidebar-error,
+.auth-error,
+.lighting-error {
+  border:
+    1px solid
+    rgb(244 137 137 / 27%);
+
+  background:
+    rgb(176 60 60 / 13%);
+
+  color:
+    #ffd2d2;
+
+  box-shadow:
+    none;
+}
+
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .room-card,
+  .environment-sidebar,
+  .login-modal {
+    border-radius:
+      16px;
+  }
+
+  .map-container {
+    border-radius:
+      12px;
+  }
+}
+
+/* =========================================================
+   TRUE DAY / NIGHT FRUTIGER AERO THEMES
+   ---------------------------------------------------------
+   Paste this at the VERY BOTTOM of aero.css.
+
+   DAY:
+   - bright aqua / mint
+   - light glass cards
+   - dark readable text
+
+   NIGHT:
+   - deep teal / blue-green
+   - dark glass cards
+   - pale readable text
+   ========================================================= */
+
+
+/* =========================================================
+   DAY THEME
+   ========================================================= */
+
+:root {
+  --page: #8ee7d2;
+
+  --surface:
+    rgb(245 255 252 / 86%);
+
+  --surface-soft:
+    rgb(224 247 240 / 86%);
+
+  --text:
+    #143c34;
+
+  --muted:
+    #577c72;
+
+  --border:
+    rgb(27 118 96 / 18%);
+
+  --accent:
+    #15966f;
+
+  --accent-hover:
+    #087f5c;
+
+  --accent-soft:
+    rgb(25 166 122 / 12%);
+
+  --shadow:
+    0 12px 32px
+    rgb(18 93 74 / 13%);
+}
+
+
+/* =========================================================
+   DAY BACKGROUND
+   ========================================================= */
+
+body {
+  color:
+    var(--text);
+
+  background:
+    radial-gradient(
+      circle at 18% 8%,
+      rgb(220 255 246 / 88%),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 83% 18%,
+      rgb(90 230 199 / 33%),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 48% 105%,
+      rgb(13 153 118 / 24%),
+      transparent 42%
+    ),
+    linear-gradient(
+      145deg,
+      #72ddc4 0%,
+      #39c8a5 42%,
+      #17a783 100%
+    );
+}
+
+
+/* =========================================================
+   DAY HEADER
+   ========================================================= */
+
+.app-header {
+  border:
+    1px solid
+    rgb(255 255 255 / 58%);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgb(244 255 251 / 78%),
+      rgb(204 243 232 / 73%)
+    );
+
+  box-shadow:
+    0 12px 30px
+    rgb(22 104 82 / 16%),
+    inset 0 1px 0
+    rgb(255 255 255 / 82%);
+}
+
+
+.app-header::before {
+  background:
+    rgb(255 255 255 / 78%);
+}
+
+
+.brand h1 {
+  color:
+    #123f36;
+}
+
+
+.brand p {
+  color:
+    #54776e;
+}
+
+
+/* =========================================================
+   DAY MAIN PANELS
+   ========================================================= */
+
+.room-card,
+.environment-sidebar {
+  border:
+    1px solid
+    rgb(255 255 255 / 56%);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgb(248 255 252 / 88%),
+      rgb(218 245 237 / 82%)
+    );
+
+  box-shadow:
+    0 14px 32px
+    rgb(19 91 73 / 15%),
+    inset 0 1px 0
+    rgb(255 255 255 / 85%);
+}
+
+
+.room-card::before,
+.environment-sidebar::before {
+  background:
+    rgb(255 255 255 / 75%);
+}
+
+
+/* =========================================================
+   DAY ROOM PLAN
+   ========================================================= */
+
+.room-card-plan {
+  background:
+    linear-gradient(
+      145deg,
+      rgb(246 255 252 / 92%),
+      rgb(214 243 234 / 88%)
+    );
+}
+
+
+.map-container {
+  border:
+    1px solid
+    rgb(29 130 105 / 18%);
+
+  background:
+    linear-gradient(
+      145deg,
+      #f8fffc 0%,
+      #e8f7f2 100%
+    );
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgb(255 255 255 / 85%),
+    inset 0 0 30px
+    rgb(35 143 113 / 5%);
+}
+
+
+.not-to-scale {
+  color:
+    #628179;
+}
+
+
+/* =========================================================
+   DAY SIDEBAR
+   ========================================================= */
+
+.environment-sidebar-header h2 {
+  color:
+    #143e35;
+}
+
+
+.environment-sidebar-header p {
+  color:
+    #607f77;
+}
+
+
+.environment-zone-card {
+  border:
+    1px solid
+    rgb(30 128 103 / 12%);
+
+  background:
+    rgb(255 255 255 / 50%);
+
+  box-shadow:
+    0 3px 10px
+    rgb(23 102 82 / 7%);
+}
+
+
+.environment-zone-card:hover {
+  border-color:
+    rgb(20 157 119 / 30%);
+
+  background:
+    rgb(255 255 255 / 68%);
+}
+
+
+.environment-zone-card h3 {
+  color:
+    #173f36;
+}
+
+
+.environment-zone-code {
+  color:
+    #6a887f;
+}
+
+
+/* =========================================================
+   DAY READINGS
+   ========================================================= */
+
+.environment-compact-readings > div {
+  border:
+    1px solid
+    rgb(28 126 101 / 10%);
+
+  background:
+    rgb(238 250 246 / 82%);
+}
+
+
+.environment-compact-readings strong {
+  color:
+    #143d34;
+}
+
+
+.environment-compact-readings span {
+  color:
+    #66857c;
+}
+
+
+.environment-policy-row {
+  color:
+    #66857c;
+}
+
+
+/* =========================================================
+   DAY STATUS
+   ========================================================= */
+
+.environment-zone-status {
+  border:
+    1px solid
+    rgb(21 150 111 / 18%);
+
+  background:
+    rgb(32 183 133 / 12%);
+
+  color:
+    #087657;
+}
+
+
+.environment-zone-status.warning,
+.environment-zone-status-warning {
+  border-color:
+    rgb(211 134 36 / 25%);
+
+  background:
+    rgb(247 177 67 / 16%);
+
+  color:
+    #8e570d;
+}
+
+
+/* =========================================================
+   DAY CONTROLS
+   ========================================================= */
+
+.language-toggle,
+.theme-toggle,
+.role-badge {
+  border:
+    1px solid
+    rgb(23 119 96 / 14%);
+
+  background:
+    rgb(255 255 255 / 48%);
+
+  color:
+    #214b41;
+}
+
+
+.language-toggle button {
+  color:
+    #597b72;
+}
+
+
+.language-toggle button.active {
+  background:
+    #ffffff;
+
+  color:
+    #08785a;
+
+  box-shadow:
+    0 2px 7px
+    rgb(25 104 84 / 10%);
+}
+
+
+.theme-toggle {
+  color:
+    #214a40;
+}
+
+
+.role-badge {
+  color:
+    #315d52;
+}
+
+
+.role-badge.admin {
+  color:
+    #087757;
+
+  background:
+    rgb(48 191 143 / 14%);
+}
+
+
+.header-auth-button {
+  color:
+    #087b5a;
+}
+
+
+/* =========================================================
+   DAY BUTTONS
+   ========================================================= */
+
+.environment-save-button,
+.login-submit-button,
+.refresh-button {
+  border:
+    1px solid
+    rgb(255 255 255 / 30%);
+
+  background:
+    linear-gradient(
+      135deg,
+      #34c995,
+      #14956c
+    );
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    0 6px 15px
+    rgb(13 114 81 / 18%);
+}
+
+
+.environment-save-button:hover,
+.login-submit-button:hover,
+.refresh-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #3dd6a0,
+      #0f865f
+    );
+}
+
+
+.environment-edit-button,
+.environment-cancel-button {
+  border:
+    1px solid
+    rgb(23 121 96 / 16%);
+
+  background:
+    rgb(255 255 255 / 45%);
+
+  color:
+    #225247;
+}
+
+
+/* =========================================================
+   DAY ADMIN EDITOR
+   ========================================================= */
+
+.environment-editor h4,
+.environment-min-lux {
+  color:
+    #214a40;
+}
+
+
+.environment-choice {
+  border:
+    1px solid
+    rgb(25 124 99 / 12%);
+
+  background:
+    rgb(255 255 255 / 42%);
+
+  color:
+    #224c42;
+}
+
+
+.environment-choice.selected {
+  border-color:
+    rgb(27 167 124 / 30%);
+
+  background:
+    rgb(45 186 139 / 12%);
+}
+
+
+.environment-choice small {
+  color:
+    #65847b;
+}
+
+
+.environment-min-lux input {
+  border:
+    1px solid
+    rgb(28 126 101 / 17%);
+
+  background:
+    rgb(255 255 255 / 70%);
+
+  color:
+    #173f36;
+}
+
+
+/* =========================================================
+   DAY LOGIN MODAL
+   ========================================================= */
+
+.modal-backdrop {
+  background:
+    rgb(10 70 57 / 36%);
+}
+
+
+.login-modal {
+  border:
+    1px solid
+    rgb(255 255 255 / 56%);
+
+  background:
+    linear-gradient(
+      145deg,
+      #f4fffb,
+      #dff4ed
+    );
+
+  box-shadow:
+    0 26px 70px
+    rgb(8 70 56 / 24%),
+    inset 0 1px 0
+    rgb(255 255 255 / 90%);
+}
+
+
+.login-modal::before {
+  background:
+    rgb(255 255 255 / 80%);
+}
+
+
+.login-modal-header h2 {
+  color:
+    #143e35;
+}
+
+
+.modal-close-button {
+  border:
+    1px solid
+    rgb(25 120 96 / 16%);
+
+  background:
+    rgb(255 255 255 / 48%);
+
+  color:
+    #416c61;
+}
+
+
+.modal-close-button:hover:not(:disabled) {
+  background:
+    rgb(255 255 255 / 80%);
+
+  color:
+    #164a3e;
+}
+
+
+.auth-field span {
+  color:
+    #456d63;
+}
+
+
+.auth-field input {
+  border:
+    1px solid
+    rgb(26 124 99 / 18%);
+
+  background:
+    rgb(255 255 255 / 68%);
+
+  color:
+    #153e35;
+}
+
+
+.auth-field input:focus {
+  border-color:
+    #25b383;
+
+  box-shadow:
+    0 0 0 3px
+    rgb(37 179 131 / 12%);
+}
+
+
+/* =========================================================
+   DAY WARNINGS
+   ========================================================= */
+
+.environment-zone-card-warning {
+  border-color:
+    rgb(217 143 44 / 38%);
+
+  background:
+    rgb(255 240 211 / 60%);
+}
+
+
+.environment-warning {
+  border:
+    1px solid
+    rgb(217 143 44 / 30%);
+
+  background:
+    rgb(255 232 190 / 60%);
+
+  color:
+    #85500d;
+}
+
+
+/* =========================================================
+   NIGHT THEME
+   ========================================================= */
+
+:root[data-theme="night"] {
+  --page:
+    #052f2b;
+
+  --surface:
+    #0c4a40;
+
+  --surface-soft:
+    #13584b;
+
+  --text:
+    #effaf6;
+
+  --muted:
+    #adcac0;
+
+  --border:
+    rgb(190 230 216 / 14%);
+
+  --accent:
+    #5ed7a8;
+
+  --accent-hover:
+    #75e6b8;
+
+  --accent-soft:
+    rgb(94 215 168 / 13%);
+
+  --shadow:
+    0 16px 38px
+    rgb(0 0 0 / 27%);
+}
+
+
+/* =========================================================
+   NIGHT BACKGROUND
+   ========================================================= */
+
+:root[data-theme="night"] body {
+  color:
+    var(--text);
+
+  background:
+    radial-gradient(
+      circle at 17% 8%,
+      rgb(46 147 123 / 22%),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 84% 22%,
+      rgb(22 111 101 / 22%),
+      transparent 37%
+    ),
+    radial-gradient(
+      circle at 48% 105%,
+      rgb(0 15 17 / 45%),
+      transparent 44%
+    ),
+    linear-gradient(
+      145deg,
+      #07554a 0%,
+      #06453d 45%,
+      #042d2b 100%
+    );
+}
+
+
+/* =========================================================
+   NIGHT HEADER
+   ========================================================= */
+
+:root[data-theme="night"]
+.app-header {
+  border:
+    1px solid
+    rgb(190 229 216 / 13%);
+
+  background:
+    linear-gradient(
+      135deg,
+      #12594b,
+      #093e37
+    );
+
+  box-shadow:
+    0 14px 34px
+    rgb(0 0 0 / 26%),
+    inset 0 1px 0
+    rgb(255 255 255 / 8%);
+}
+
+
+:root[data-theme="night"]
+.app-header::before {
+  background:
+    rgb(255 255 255 / 14%);
+}
+
+
+:root[data-theme="night"]
+.brand h1 {
+  color:
+    #f2fbf7;
+}
+
+
+:root[data-theme="night"]
+.brand p {
+  color:
+    #aecbc1;
+}
+
+
+/* =========================================================
+   NIGHT PANELS
+   ========================================================= */
+
+:root[data-theme="night"]
+.room-card,
+:root[data-theme="night"]
+.environment-sidebar {
+  border:
+    1px solid
+    rgb(194 232 219 / 12%);
+
+  background:
+    linear-gradient(
+      145deg,
+      #105347,
+      #083b35
+    );
+
+  box-shadow:
+    0 16px 38px
+    rgb(0 0 0 / 24%),
+    inset 0 1px 0
+    rgb(255 255 255 / 7%);
+}
+
+
+:root[data-theme="night"]
+.room-card::before,
+:root[data-theme="night"]
+.environment-sidebar::before {
+  background:
+    rgb(255 255 255 / 13%);
+}
+
+
+/* =========================================================
+   NIGHT ROOM PLAN
+   ---------------------------------------------------------
+   Keep the drawing fairly light for readability.
+   The surrounding card is dark, so it still feels like
+   night mode without destroying the SVG contrast.
+   ========================================================= */
+
+:root[data-theme="night"]
+.room-card-plan {
+  background:
+    linear-gradient(
+      145deg,
+      #104f44,
+      #083b35
+    );
+}
+
+
+:root[data-theme="night"]
+.map-container {
+  border:
+    1px solid
+    rgb(156 213 194 / 22%);
+
+  background:
+    linear-gradient(
+      145deg,
+      #dceee8,
+      #c9e3da
+    );
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgb(255 255 255 / 35%),
+    inset 0 0 32px
+    rgb(5 79 64 / 9%);
+}
+
+
+:root[data-theme="night"]
+.room-map {
+  filter:
+    brightness(0.93)
+    saturate(0.9);
+
+  opacity:
+    0.96;
+}
+
+
+:root[data-theme="night"]
+.not-to-scale {
+  color:
+    #a7c7bc;
+}
+
+
+/* =========================================================
+   NIGHT SIDEBAR
+   ========================================================= */
+
+:root[data-theme="night"]
+.environment-sidebar-header h2 {
+  color:
+    #f1faf6;
+}
+
+
+:root[data-theme="night"]
+.environment-sidebar-header p {
+  color:
+    #abc8be;
+}
+
+
+:root[data-theme="night"]
+.environment-zone-card {
+  border:
+    1px solid
+    rgb(197 232 220 / 10%);
+
+  background:
+    rgb(255 255 255 / 4%);
+
+  box-shadow:
+    none;
+}
+
+
+:root[data-theme="night"]
+.environment-zone-card:hover {
+  border-color:
+    rgb(107 223 182 / 24%);
+
+  background:
+    rgb(255 255 255 / 6%);
+}
+
+
+:root[data-theme="night"]
+.environment-zone-card h3 {
+  color:
+    #eff9f5;
+}
+
+
+:root[data-theme="night"]
+.environment-zone-code {
+  color:
+    #9fbbb2;
+}
+
+
+/* =========================================================
+   NIGHT READINGS
+   ========================================================= */
+
+:root[data-theme="night"]
+.environment-compact-readings > div {
+  border:
+    1px solid
+    rgb(200 233 222 / 9%);
+
+  background:
+    rgb(0 24 22 / 22%);
+}
+
+
+:root[data-theme="night"]
+.environment-compact-readings strong {
+  color:
+    #ffffff;
+}
+
+
+:root[data-theme="night"]
+.environment-compact-readings span,
+:root[data-theme="night"]
+.environment-policy-row {
+  color:
+    #abc7be;
+}
+
+
+/* =========================================================
+   NIGHT STATUS
+   ========================================================= */
+
+:root[data-theme="night"]
+.environment-zone-status {
+  border:
+    1px solid
+    rgb(96 217 174 / 17%);
+
+  background:
+    rgb(74 198 152 / 11%);
+
+  color:
+    #b9f1db;
+}
+
+
+:root[data-theme="night"]
+.environment-zone-status.warning,
+:root[data-theme="night"]
+.environment-zone-status-warning {
+  border-color:
+    rgb(242 181 88 / 27%);
+
+  background:
+    rgb(205 137 45 / 13%);
+
+  color:
+    #ffd89a;
+}
+
+
+/* =========================================================
+   NIGHT CONTROLS
+   ========================================================= */
+
+:root[data-theme="night"]
+.language-toggle,
+:root[data-theme="night"]
+.theme-toggle,
+:root[data-theme="night"]
+.role-badge {
+  border:
+    1px solid
+    rgb(200 232 221 / 10%);
+
+  background:
+    rgb(255 255 255 / 4%);
+
+  color:
+    #e6f4ef;
+}
+
+
+:root[data-theme="night"]
+.language-toggle button {
+  color:
+    #9fbcb2;
+}
+
+
+:root[data-theme="night"]
+.language-toggle button.active {
+  background:
+    rgb(101 220 178 / 13%);
+
+  color:
+    #d2f7e8;
+
+  box-shadow:
+    none;
+}
+
+
+:root[data-theme="night"]
+.theme-toggle {
+  color:
+    #e9f5f1;
+}
+
+
+:root[data-theme="night"]
+.role-badge {
+  color:
+    #d8ebe4;
+}
+
+
+:root[data-theme="night"]
+.role-badge.admin {
+  color:
+    #a9eed2;
+
+  background:
+    rgb(70 195 148 / 11%);
+}
+
+
+:root[data-theme="night"]
+.header-auth-button {
+  color:
+    #8de4c1;
+}
+
+
+/* =========================================================
+   NIGHT BUTTONS
+   ========================================================= */
+
+:root[data-theme="night"]
+.environment-save-button,
+:root[data-theme="night"]
+.login-submit-button,
+:root[data-theme="night"]
+.refresh-button {
+  border:
+    1px solid
+    rgb(129 234 195 / 21%);
+
+  background:
+    linear-gradient(
+      135deg,
+      #39c38e,
+      #168462
+    );
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    0 7px 17px
+    rgb(0 0 0 / 18%);
+}
+
+
+:root[data-theme="night"]
+.environment-save-button:hover,
+:root[data-theme="night"]
+.login-submit-button:hover,
+:root[data-theme="night"]
+.refresh-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #4bd29d,
+      #1c956c
+    );
+}
+
+
+:root[data-theme="night"]
+.environment-edit-button,
+:root[data-theme="night"]
+.environment-cancel-button {
+  border:
+    1px solid
+    rgb(200 233 222 / 11%);
+
+  background:
+    rgb(255 255 255 / 4%);
+
+  color:
+    #e3f2ed;
+}
+
+
+/* =========================================================
+   NIGHT ADMIN EDITOR
+   ========================================================= */
+
+:root[data-theme="night"]
+.environment-editor h4,
+:root[data-theme="night"]
+.environment-min-lux {
+  color:
+    #e9f6f1;
+}
+
+
+:root[data-theme="night"]
+.environment-choice {
+  border:
+    1px solid
+    rgb(197 231 219 / 10%);
+
+  background:
+    rgb(255 255 255 / 3%);
+
+  color:
+    #e6f4ef;
+}
+
+
+:root[data-theme="night"]
+.environment-choice.selected {
+  border-color:
+    rgb(90 218 171 / 29%);
+
+  background:
+    rgb(83 209 162 / 9%);
+}
+
+
+:root[data-theme="night"]
+.environment-choice small {
+  color:
+    #a8c5bb;
+}
+
+
+:root[data-theme="night"]
+.environment-min-lux input {
+  border:
+    1px solid
+    rgb(196 231 219 / 12%);
+
+  background:
+    rgb(0 28 25 / 25%);
+
+  color:
+    #ffffff;
+}
+
+
+/* =========================================================
+   NIGHT LOGIN MODAL
+   ========================================================= */
+
+:root[data-theme="night"]
+.modal-backdrop {
+  background:
+    rgb(0 15 14 / 67%);
+}
+
+
+:root[data-theme="night"]
+.login-modal {
+  border:
+    1px solid
+    rgb(194 231 218 / 13%);
+
+  background:
+    linear-gradient(
+      145deg,
+      #105348,
+      #073a34
+    );
+
+  box-shadow:
+    0 28px 75px
+    rgb(0 0 0 / 38%),
+    inset 0 1px 0
+    rgb(255 255 255 / 7%);
+}
+
+
+:root[data-theme="night"]
+.login-modal::before {
+  background:
+    rgb(255 255 255 / 13%);
+}
+
+
+:root[data-theme="night"]
+.login-modal-header h2 {
+  color:
+    #f1faf6;
+}
+
+
+:root[data-theme="night"]
+.modal-close-button {
+  border:
+    1px solid
+    rgb(200 233 222 / 11%);
+
+  background:
+    rgb(255 255 255 / 4%);
+
+  color:
+    #d2e7df;
+}
+
+
+:root[data-theme="night"]
+.modal-close-button:hover:not(:disabled) {
+  background:
+    rgb(255 255 255 / 8%);
+
+  color:
+    #ffffff;
+}
+
+
+:root[data-theme="night"]
+.auth-field span {
+  color:
+    #bed4cc;
+}
+
+
+:root[data-theme="night"]
+.auth-field input {
+  border:
+    1px solid
+    rgb(196 231 219 / 13%);
+
+  background:
+    rgb(0 27 24 / 25%);
+
+  color:
+    #ffffff;
+}
+
+
+:root[data-theme="night"]
+.auth-field input:focus {
+  border-color:
+    #5bd5a5;
+
+  box-shadow:
+    0 0 0 3px
+    rgb(91 213 165 / 12%);
+}
+
+
+/* =========================================================
+   NIGHT WARNINGS
+   ========================================================= */
+
+:root[data-theme="night"]
+.environment-zone-card-warning {
+  border-color:
+    rgb(238 174 78 / 36%);
+
+  background:
+    rgb(139 89 22 / 12%);
+}
+
+
+:root[data-theme="night"]
+.environment-warning {
+  border:
+    1px solid
+    rgb(238 174 78 / 26%);
+
+  background:
+    rgb(164 103 26 / 12%);
+
+  color:
+    #ffdba0;
+}
+
+/* =========================================================
+   UNIFIED TYPOGRAPHY
+   Use the normal dashboard font stack for both EN and TH.
+   ========================================================= */
+
+html[lang="en"] body,
+html[lang="th"] body {
+  font-family:
+    "Segoe UI",
+    "Noto Sans Thai",
+    Tahoma,
+    Arial,
+    sans-serif;
+}
+
+/* =========================================================
+   ZONE SETTINGS MODAL
+   Modern Frutiger Aero
+   ========================================================= */
+
+.settings-modal-backdrop {
+  position: fixed;
+
+  z-index: 1200;
+
+  inset: 0;
+
+  display: grid;
+
+  place-items: center;
+
+  padding: 20px;
+
+  background:
+    rgb(12 72 59 / 36%);
+
+  /*
+   * No backdrop-filter here.
+   * Keeps the modal fast while scrolling/opening.
+   */
+}
+
+
+.settings-modal {
+  width:
+    min(
+      100%,
+      480px
+    );
+
+  max-height:
+    calc(
+      100vh - 40px
+    );
+
+  overflow-y:
+    auto;
+
+  padding: 24px;
+
+  border:
+    1px solid
+    rgb(255 255 255 / 56%);
+
+  border-radius:
+    22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f4fffb,
+      #dff4ed
+    );
+
+  color:
+    #143e35;
+
+  box-shadow:
+    0 26px 70px
+    rgb(8 70 56 / 24%),
+    inset 0 1px 0
+    rgb(255 255 255 / 90%);
+}
+
+
+/* =========================================================
+   Modal header
+   ========================================================= */
+
+.settings-modal-header {
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content:
+    space-between;
+
+  gap: 18px;
+
+  margin-bottom:
+    22px;
+}
+
+
+.settings-modal-header > div {
+  min-width: 0;
+}
+
+
+.settings-modal-zone {
+  display: block;
+
+  margin-bottom:
+    3px;
+
+  color:
+    #628179;
+
+  font-size:
+    12px;
+
+  font-weight:
+    650;
+}
+
+
+.settings-modal-header h2 {
+  margin: 0;
+
+  color:
+    #143e35;
+
+  font-size:
+    23px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    -0.02em;
+}
+
+
+.settings-modal-close {
+  display: grid;
+
+  flex:
+    0 0 auto;
+
+  place-items:
+    center;
+
+  width: 38px;
+  height: 38px;
+
+  padding: 0;
+
+  border:
+    1px solid
+    rgb(25 120 96 / 16%);
+
+  border-radius:
+    11px;
+
+  background:
+    rgb(255 255 255 / 48%);
+
+  color:
+    #416c61;
+
+  cursor: pointer;
+
+  font-size:
+    22px;
+
+  line-height: 1;
+}
+
+
+.settings-modal-close:hover:not(
+  :disabled
+) {
+  border-color:
+    rgb(24 157 118 / 28%);
+
+  background:
+    rgb(255 255 255 / 80%);
+
+  color:
+    #164a3e;
+}
+
+
+.settings-modal-close:disabled {
+  cursor: default;
+
+  opacity: 0.5;
+}
+
+
+/* =========================================================
+   Error
+   ========================================================= */
+
+.settings-modal-error {
+  margin-bottom:
+    16px;
+
+  padding:
+    10px 12px;
+
+  border:
+    1px solid
+    rgb(205 84 84 / 24%);
+
+  border-radius:
+    11px;
+
+  background:
+    rgb(210 83 83 / 10%);
+
+  color:
+    #8e3333;
+
+  font-size:
+    13px;
+}
+
+
+/* =========================================================
+   Policy choices
+   ========================================================= */
+
+.settings-mode-fieldset {
+  display: grid;
+
+  gap: 10px;
+
+  margin: 0;
+
+  padding: 0;
+
+  border: 0;
+}
+
+
+.settings-mode-fieldset legend {
+  margin-bottom:
+    10px;
+
+  color:
+    #335e53;
+
+  font-size:
+    13px;
+
+  font-weight:
+    650;
+}
+
+
+/*
+ * Existing .environment-choice styles are reused,
+ * but make the cards slightly roomier inside modal.
+ */
+.settings-modal
+.environment-choice {
+  min-height:
+    76px;
+
+  margin-top: 0;
+
+  padding:
+    13px 14px;
+}
+
+
+/* =========================================================
+   Minimum Lux
+   ========================================================= */
+
+.settings-min-lux {
+  margin-top:
+    20px;
+}
+
+
+.settings-min-lux > span {
+  color:
+    #335e53;
+}
+
+
+.settings-min-lux > div {
+  margin-top:
+    2px;
+}
+
+
+.settings-modal
+.settings-min-lux
+input {
+  width:
+    150px;
+
+  min-height:
+    44px;
+
+  font-size:
+    16px;
+}
+
+
+/* =========================================================
+   Actions
+   ========================================================= */
+
+.settings-modal-actions {
+  display: grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  gap: 10px;
+
+  margin-top:
+    24px;
+}
+
+
+.settings-modal-actions
+.environment-cancel-button,
+.settings-modal-actions
+.environment-save-button {
+  width: 100%;
+
+  min-height:
+    46px;
+
+  margin: 0;
+}
+
+
+/* =========================================================
+   NIGHT THEME
+   ========================================================= */
+
+:root[data-theme="night"]
+.settings-modal-backdrop {
+  background:
+    rgb(0 15 14 / 67%);
+}
+
+
+:root[data-theme="night"]
+.settings-modal {
+  border:
+    1px solid
+    rgb(194 231 218 / 13%);
+
+  background:
+    linear-gradient(
+      145deg,
+      #105348,
+      #073a34
+    );
+
+  color:
+    #effaf6;
+
+  box-shadow:
+    0 28px 75px
+    rgb(0 0 0 / 38%),
+    inset 0 1px 0
+    rgb(255 255 255 / 7%);
+}
+
+
+:root[data-theme="night"]
+.settings-modal-zone {
+  color:
+    #a7c5bb;
+}
+
+
+:root[data-theme="night"]
+.settings-modal-header h2 {
+  color:
+    #f1faf6;
+}
+
+
+:root[data-theme="night"]
+.settings-modal-close {
+  border:
+    1px solid
+    rgb(200 233 222 / 11%);
+
+  background:
+    rgb(255 255 255 / 4%);
+
+  color:
+    #d2e7df;
+}
+
+
+:root[data-theme="night"]
+.settings-modal-close:hover:not(
+  :disabled
+) {
+  border-color:
+    rgb(101 220 178 / 25%);
+
+  background:
+    rgb(255 255 255 / 8%);
+
+  color:
+    #ffffff;
+}
+
+
+:root[data-theme="night"]
+.settings-mode-fieldset legend,
+:root[data-theme="night"]
+.settings-min-lux > span {
+  color:
+    #bed4cc;
+}
+
+
+:root[data-theme="night"]
+.settings-modal-error {
+  border-color:
+    rgb(244 137 137 / 27%);
+
+  background:
+    rgb(176 60 60 / 13%);
+
+  color:
+    #ffd2d2;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (
+  max-width: 560px
+) {
+  .settings-modal-backdrop {
+    padding: 12px;
+  }
+
+  .settings-modal {
+    width: 100%;
+
+    padding: 20px;
+
+    border-radius:
+      18px;
+  }
+
+  .settings-modal-actions {
+    grid-template-columns:
+      1fr;
+  }
+
+  .settings-modal
+  .settings-min-lux
+  input {
+    width:
+      130px;
+  }
+}

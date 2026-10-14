@@ -173,10 +173,6 @@ export function LoginModal({
             >
               {copy.title}
             </h2>
-
-            <p>
-              {copy.loginPrompt}
-            </p>
           </div>
 
           <button

@@ -50,11 +50,11 @@ export function Header({
     <header className="app-header">
       <div className="brand">
         <h1>
-          CPE Co-Working Space
+          CPE Coworking Space
         </h1>
 
         <p>
-          {copy.header.subtitle}
+          Environment Monitoring Dashboard
         </p>
       </div>
 
