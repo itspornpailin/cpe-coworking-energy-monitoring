@@ -52,6 +52,7 @@ func NewRouter(
 					http.MethodGet,
 					http.MethodPost,
 					http.MethodPatch,
+					http.MethodPut,
 					http.MethodDelete,
 					http.MethodOptions,
 				},
@@ -99,6 +100,12 @@ func NewRouter(
 			live,
 		)
 
+	nodeHandler :=
+		handler.NewNodeHandler(
+			db,
+			live,
+		)
+
 	router.Route(
 		"/api/v1",
 		func(r chi.Router) {
@@ -115,6 +122,11 @@ func NewRouter(
 			r.Get(
 				"/environment-zones",
 				environmentHandler.List,
+			)
+
+			r.Get(
+				"/environment-nodes",
+				nodeHandler.List,
 			)
 
 			r.Route(
@@ -148,6 +160,31 @@ func NewRouter(
 					admin.Patch(
 						"/admin/lighting-zones/{areaID}",
 						lightingHandler.UpdateRule,
+					)
+
+					admin.Post(
+						"/admin/zones",
+						environmentHandler.Create,
+					)
+
+					admin.Patch(
+						"/admin/zones/{zoneID}",
+						environmentHandler.Rename,
+					)
+
+					admin.Delete(
+						"/admin/zones/{zoneID}",
+						environmentHandler.Delete,
+					)
+
+					admin.Put(
+						"/admin/nodes/{nodeID}/zone",
+						nodeHandler.SetZone,
+					)
+
+					admin.Put(
+						"/admin/nodes/{nodeID}/position",
+						nodeHandler.SetPosition,
 					)
 				},
 			)
