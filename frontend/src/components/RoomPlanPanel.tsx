@@ -1,5 +1,12 @@
 import {
+  useRef,
   useState,
+} from "react";
+
+import type {
+  KeyboardEvent,
+  MouseEvent,
+  PointerEvent,
 } from "react";
 
 import type {
@@ -23,10 +30,27 @@ import type {
   EnvironmentZone,
 } from "../types/environment";
 
+// Admin editing of sensor positions. Leave it out for a read-only map.
+export interface PlanEditing {
+  selectedId: string | null;
+
+  onSelect: (
+    nodeId: string | null,
+  ) => void;
+
+  // A marker was dropped, nudged with the keyboard, or an unplaced sensor was placed.
+  onMove: (
+    nodeId: string,
+    x: number,
+    y: number,
+  ) => void;
+}
+
 interface RoomPlanPanelProps {
   language: Language;
   zones: EnvironmentZone[];
   nodes: EnvironmentNode[];
+  editing?: PlanEditing;
 }
 
 type PlacedNode =
@@ -127,10 +151,21 @@ function isPlaced(
   );
 }
 
+function clamp(
+  value: number,
+  max: number,
+): number {
+  return Math.min(
+    Math.max(value, 0),
+    max,
+  );
+}
+
 export function RoomPlanPanel({
   language,
   zones,
   nodes,
+  editing,
 }: RoomPlanPanelProps) {
   const copy =
     COPY[language];
@@ -146,8 +181,34 @@ export function RoomPlanPanel({
   ] =
     useState(false);
 
+  const svgRef =
+    useRef<SVGSVGElement>(null);
+
+  // While a marker is being dragged it follows the pointer;
+  // the new position is only saved when it is dropped.
+  const [
+    drag,
+    setDrag,
+  ] =
+    useState<{
+      id: string;
+      x: number;
+      y: number;
+      moved: boolean;
+    } | null>(null);
+
   const placed =
-    nodes.filter(isPlaced);
+    nodes
+      .filter(isPlaced)
+      .map((node) =>
+        drag?.id === node.nodeId
+          ? {
+              ...node,
+              x: drag.x,
+              y: drag.y,
+            }
+          : node,
+      );
 
   // Every spot on the drawing belongs to its nearest sensor, so a sensor's
   // zone decides the colour around it. Moving a sensor to another zone
@@ -162,22 +223,39 @@ export function RoomPlanPanel({
       ),
     );
 
+  // Colours follow the zone's id, not its position in the list, so adding or
+  // renaming a zone never changes the colour of the others.
+  const zoneColor =
+    new Map(
+      [...zones]
+        .sort(
+          (a, b) =>
+            a.areaId - b.areaId,
+        )
+        .map(
+          (zone, index) => [
+            zone.areaId,
+            ZONE_COLORS[
+              index %
+                ZONE_COLORS.length
+            ],
+          ],
+        ),
+    );
+
   const zoneInfo =
     new Map(
-      zones.map(
-        (zone, index) => [
-          zone.areaId,
-          {
-            zone,
+      zones.map((zone) => [
+        zone.areaId,
+        {
+          zone,
 
-            color:
-              ZONE_COLORS[
-                index %
-                  ZONE_COLORS.length
-              ],
-          },
-        ],
-      ),
+          color:
+            zoneColor.get(
+              zone.areaId,
+            ) ?? NO_ZONE_COLOR,
+        },
+      ]),
     );
 
   const updatedTimes =
@@ -207,6 +285,191 @@ export function RoomPlanPanel({
     nodes.length -
     placed.length;
 
+  // Converts a pointer position on screen into drawing coordinates.
+  function toPlanPoint(
+    event: {
+      clientX: number;
+      clientY: number;
+    },
+  ): Point | null {
+    const svg =
+      svgRef.current;
+
+    const matrix =
+      svg?.getScreenCTM();
+
+    if (!svg || !matrix) {
+      return null;
+    }
+
+    const point =
+      new DOMPoint(
+        event.clientX,
+        event.clientY,
+      ).matrixTransform(
+        matrix.inverse(),
+      );
+
+    return [
+      clamp(point.x, PLAN_WIDTH),
+      clamp(point.y, PLAN_HEIGHT),
+    ];
+  }
+
+  // Clicking empty map: place the selected sensor if it has no position yet,
+  // otherwise just clear the selection.
+  function handleMapClick(
+    event: MouseEvent<SVGSVGElement>,
+  ) {
+    if (!editing) {
+      return;
+    }
+
+    const selected =
+      nodes.find(
+        (node) =>
+          node.nodeId ===
+          editing.selectedId,
+      );
+
+    const point =
+      toPlanPoint(event);
+
+    if (
+      selected &&
+      !isPlaced(selected) &&
+      point
+    ) {
+      editing.onMove(
+        selected.nodeId,
+        point[0],
+        point[1],
+      );
+
+      return;
+    }
+
+    editing.onSelect(null);
+  }
+
+  function handleNodePointerDown(
+    event: PointerEvent<SVGGElement>,
+    node: PlacedNode,
+  ) {
+    if (!editing) {
+      return;
+    }
+
+    event.stopPropagation();
+
+    event.currentTarget.setPointerCapture(
+      event.pointerId,
+    );
+
+    editing.onSelect(
+      node.nodeId,
+    );
+
+    setDrag({
+      id: node.nodeId,
+      x: node.x,
+      y: node.y,
+      moved: false,
+    });
+  }
+
+  function handleNodePointerMove(
+    event: PointerEvent<SVGGElement>,
+    node: PlacedNode,
+  ) {
+    if (drag?.id !== node.nodeId) {
+      return;
+    }
+
+    const point =
+      toPlanPoint(event);
+
+    if (point) {
+      setDrag({
+        id: node.nodeId,
+        x: point[0],
+        y: point[1],
+        moved: true,
+      });
+    }
+  }
+
+  function handleNodePointerUp(
+    node: PlacedNode,
+  ) {
+    if (
+      editing &&
+      drag?.id === node.nodeId &&
+      drag.moved
+    ) {
+      editing.onMove(
+        node.nodeId,
+        drag.x,
+        drag.y,
+      );
+    }
+
+    setDrag(null);
+  }
+
+  // Arrow keys nudge the focused sensor (hold Shift for bigger steps).
+  function handleNodeKeyDown(
+    event: KeyboardEvent<SVGGElement>,
+    node: PlacedNode,
+  ) {
+    if (!editing) {
+      return;
+    }
+
+    const step =
+      event.shiftKey
+        ? 20
+        : 5;
+
+    const moves: Record<
+      string,
+      [number, number]
+    > = {
+      ArrowLeft: [-step, 0],
+      ArrowRight: [step, 0],
+      ArrowUp: [0, -step],
+      ArrowDown: [0, step],
+    };
+
+    if (event.key in moves) {
+      event.preventDefault();
+
+      const [dx, dy] =
+        moves[event.key];
+
+      editing.onMove(
+        node.nodeId,
+        clamp(
+          node.x + dx,
+          PLAN_WIDTH,
+        ),
+        clamp(
+          node.y + dy,
+          PLAN_HEIGHT,
+        ),
+      );
+    } else if (
+      event.key === "Enter" ||
+      event.key === " "
+    ) {
+      event.preventDefault();
+
+      editing.onSelect(
+        node.nodeId,
+      );
+    }
+  }
+
   return (
     <section
       className="room-card room-card-plan"
@@ -229,10 +492,16 @@ export function RoomPlanPanel({
             </div>
           ) : (
             <svg
-              className="room-plan-svg"
+              ref={svgRef}
+              className={
+                editing
+                  ? "room-plan-svg is-editing"
+                  : "room-plan-svg"
+              }
               viewBox={`0 0 ${PLAN_WIDTH} ${PLAN_HEIGHT}`}
               role="group"
               aria-label={copy.alt}
+              onClick={handleMapClick}
             >
               <defs>
                 <clipPath id="room-floor">
@@ -326,6 +595,10 @@ export function RoomPlanPanel({
                         node.zoneId,
                       );
 
+                const selected =
+                  editing?.selectedId ===
+                  node.nodeId;
+
                 const description =
                   [
                     node.name,
@@ -356,19 +629,65 @@ export function RoomPlanPanel({
                 return (
                   <g
                     key={node.nodeId}
-                    className={
+                    className={[
+                      "plan-node",
                       node.stale
-                        ? "plan-node is-stale"
-                        : "plan-node"
-                    }
+                        ? "is-stale"
+                        : "",
+                      selected
+                        ? "is-selected"
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     transform={`translate(${node.x} ${node.y})`}
                     tabIndex={0}
                     role="img"
                     aria-label={description}
+                    onClick={(event) =>
+                      event.stopPropagation()
+                    }
+                    onPointerDown={(
+                      event,
+                    ) =>
+                      handleNodePointerDown(
+                        event,
+                        node,
+                      )
+                    }
+                    onPointerMove={(
+                      event,
+                    ) =>
+                      handleNodePointerMove(
+                        event,
+                        node,
+                      )
+                    }
+                    onPointerUp={() =>
+                      handleNodePointerUp(
+                        node,
+                      )
+                    }
+                    onPointerCancel={() =>
+                      setDrag(null)
+                    }
+                    onKeyDown={(event) =>
+                      handleNodeKeyDown(
+                        event,
+                        node,
+                      )
+                    }
                   >
                     <title>
                       {description}
                     </title>
+
+                    {selected && (
+                      <circle
+                        className="plan-node-ring"
+                        r="15"
+                      />
+                    )}
 
                     <circle
                       className="plan-node-dot"
@@ -404,24 +723,21 @@ export function RoomPlanPanel({
 
         <div className="plan-legend-wrap">
           <ul className="plan-legend">
-            {zones.map(
-              (zone, index) => (
-                <li key={zone.areaId}>
-                  <span
-                    className="plan-legend-chip"
-                    style={{
-                      background:
-                        ZONE_COLORS[
-                          index %
-                            ZONE_COLORS.length
-                        ],
-                    }}
-                  />
+            {zones.map((zone) => (
+              <li key={zone.areaId}>
+                <span
+                  className="plan-legend-chip"
+                  style={{
+                    background:
+                      zoneColor.get(
+                        zone.areaId,
+                      ),
+                  }}
+                />
 
-                  {zone.name}
-                </li>
-              ),
-            )}
+                {zone.name}
+              </li>
+            ))}
 
             {placed.some(
               (node) =>

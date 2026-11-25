@@ -1,0 +1,204 @@
+/* =========================================================
+   Admin sensor and zone editor (shown to admins only).
+   ========================================================= */
+
+.sensor-editor {
+  display: grid;
+  gap: 10px;
+
+  margin-top: 16px;
+  padding: 16px;
+
+  color: var(--text);
+}
+
+.sensor-editor h2,
+.sensor-editor h3 {
+  margin: 0;
+}
+
+.sensor-editor h2 {
+  font-size: 1.1rem;
+}
+
+.sensor-editor h3 {
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+.sensor-editor-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sensor-editor-note {
+  margin: 0;
+
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.sensor-editor-hint {
+  font-weight: 600;
+  opacity: 1;
+}
+
+.sensor-editor-error {
+  margin: 0;
+  padding: 8px 10px;
+
+  border-radius: 8px;
+
+  background: rgb(192 57 43 / 14%);
+  color: #b03a2e;
+
+  font-size: 0.85rem;
+}
+
+:root[data-theme="night"]
+.sensor-editor-error {
+  color: #ffb4a8;
+}
+
+.sensor-list,
+.zone-list {
+  display: grid;
+  gap: 6px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.sensor-row {
+  display: grid;
+  grid-template-columns:
+    minmax(110px, 1.2fr)
+    minmax(110px, 1fr)
+    auto
+    auto;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 8px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 10px;
+
+  background: var(--surface-soft);
+}
+
+.sensor-row.is-selected {
+  border-color: var(--accent);
+
+  box-shadow:
+    0 0 0 2px
+    var(--accent-soft);
+}
+
+.sensor-name {
+  overflow: hidden;
+
+  border: 0;
+  background: none;
+
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  cursor: pointer;
+}
+
+.sensor-state {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.sensor-editor select,
+.sensor-editor input[type="text"] {
+  min-width: 0;
+  padding: 6px 8px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 8px;
+
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+}
+
+.sensor-editor-toggle,
+.sensor-action {
+  padding: 6px 12px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 999px;
+
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+
+  cursor: pointer;
+}
+
+.sensor-editor-toggle[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.sensor-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.zone-row,
+.zone-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+/* Map markers are draggable while editing. */
+.room-plan-svg.is-editing .plan-node {
+  cursor: grab;
+  touch-action: none;
+}
+
+.room-plan-svg.is-editing .plan-node:active {
+  cursor: grabbing;
+}
+
+.plan-node-ring {
+  fill: none;
+  stroke: #12372e;
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+:root[data-theme="night"]
+.plan-node-ring {
+  stroke: #12372e;
+}
+
+@media (max-width: 640px) {
+  .sensor-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -5,6 +5,14 @@ import {
 } from "react";
 
 import {
+  createZone,
+  deleteZone,
+  renameZone,
+  setNodePosition,
+  setNodeZone,
+} from "./api/admin";
+
+import {
   getAuthState,
   loginAdmin,
   logoutAdmin,
@@ -38,6 +46,10 @@ import {
 import {
   RoomPlanPanel,
 } from "./components/RoomPlanPanel";
+
+import {
+  SensorEditor,
+} from "./components/SensorEditor";
 
 import {
   translations,
@@ -150,6 +162,21 @@ function App() {
   ] =
     useState(true);
 
+  // Admin sensor editing: whether markers can be dragged, and which sensor is selected.
+  const [
+    editMode,
+    setEditMode,
+  ] =
+    useState(false);
+
+  const [
+    selectedNodeId,
+    setSelectedNodeId,
+  ] =
+    useState<string | null>(
+      null,
+    );
+
   useEffect(() => {
     document.documentElement.dataset.theme =
       theme;
@@ -232,8 +259,13 @@ function App() {
           zones.status ===
           "fulfilled"
         ) {
+          // Oldest zone first, so a newly added zone goes to the end of the list.
           setEnvironmentZones(
-            zones.value,
+            [...zones.value].sort(
+              (a, b) =>
+                a.areaId -
+                b.areaId,
+            ),
           );
         }
 
@@ -355,6 +387,9 @@ function App() {
       setAuth(
         await logoutAdmin(),
       );
+
+      setEditMode(false);
+      setSelectedNodeId(null);
     } catch {
       setAuthError(
         "requestFailed",
@@ -382,6 +417,96 @@ function App() {
 
     await loadEnvironment();
   }
+
+  // Admin sensor editing. Each handler saves, then reloads so the page shows what the server has.
+  // Errors are thrown on purpose: SensorEditor shows them to the admin.
+  async function handleNodeMove(
+    nodeId: string,
+    x: number,
+    y: number,
+  ) {
+    // Show the new position straight away so the marker does not jump back
+    // while the save is in flight.
+    setEnvironmentNodes(
+      (current) =>
+        current.map((node) =>
+          node.nodeId === nodeId
+            ? { ...node, x, y }
+            : node,
+        ),
+    );
+
+    try {
+      await setNodePosition(
+        nodeId,
+        { x, y },
+      );
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  async function handleRemoveFromPlan(
+    nodeId: string,
+  ) {
+    try {
+      await setNodePosition(
+        nodeId,
+        null,
+      );
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  async function handleSetNodeZone(
+    nodeId: string,
+    zoneId: number | null,
+  ) {
+    try {
+      await setNodeZone(
+        nodeId,
+        zoneId,
+      );
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  async function handleCreateZone(
+    name: string,
+  ) {
+    await createZone(name);
+
+    await loadEnvironment();
+  }
+
+  async function handleRenameZone(
+    areaId: number,
+    name: string,
+  ) {
+    try {
+      await renameZone(
+        areaId,
+        name,
+      );
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  async function handleDeleteZone(
+    areaId: number,
+  ) {
+    try {
+      await deleteZone(areaId);
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  const isAdmin =
+    auth.role === "admin";
 
   const authErrorMessage =
     authError === null
@@ -432,6 +557,33 @@ function App() {
             nodes={
               environmentNodes
             }
+            editing={
+              isAdmin && editMode
+                ? {
+                    selectedId:
+                      selectedNodeId,
+                    onSelect:
+                      setSelectedNodeId,
+                    onMove: (
+                      nodeId,
+                      x,
+                      y,
+                    ) => {
+                      void handleNodeMove(
+                        nodeId,
+                        x,
+                        y,
+                      ).catch(
+                        (error) =>
+                          console.error(
+                            "Unable to move sensor:",
+                            error,
+                          ),
+                      );
+                    },
+                  }
+                : undefined
+            }
           />
 
           <EnvironmentSidebar
@@ -448,6 +600,43 @@ function App() {
             }
           />
         </div>
+
+        {isAdmin && (
+          <SensorEditor
+            language={language}
+            nodes={
+              environmentNodes
+            }
+            zones={
+              environmentZones
+            }
+            editMode={editMode}
+            onEditModeChange={
+              setEditMode
+            }
+            selectedNodeId={
+              selectedNodeId
+            }
+            onSelectNode={
+              setSelectedNodeId
+            }
+            onSetNodeZone={
+              handleSetNodeZone
+            }
+            onRemoveFromPlan={
+              handleRemoveFromPlan
+            }
+            onCreateZone={
+              handleCreateZone
+            }
+            onRenameZone={
+              handleRenameZone
+            }
+            onDeleteZone={
+              handleDeleteZone
+            }
+          />
+        )}
       </main>
 
       <LoginModal

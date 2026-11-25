@@ -12,6 +12,7 @@ import "./styles.css";
 import "./auth.css";
 import "./aero.css";
 import "./roomOverlay.css";
+import "./adminEditor.css";
 
 const rootElement =
   document.getElementById(
