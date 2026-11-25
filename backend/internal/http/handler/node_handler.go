@@ -86,7 +86,7 @@ ORDER BY n.node_id;`)
 			n.UpdatedAt = &updated
 			n.LightLux = reading.LightLux
 			n.TemperatureC = reading.TemperatureC
-			n.Stale = now.Sub(updated) > liveReadingMaxAge
+			n.Stale = telemetry.IsStale(reading, now)
 		}
 
 		nodes = append(nodes, n)

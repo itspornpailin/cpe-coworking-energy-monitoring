@@ -19,6 +19,9 @@ type Config struct {
 	SessionTTL   time.Duration
 	CookieSecure bool
 
+	// How often one node's reading is saved to the database (live values are always kept).
+	ReadingSaveInterval time.Duration
+
 	ReadTimeout       time.Duration
 	ReadHeaderTimeout time.Duration
 	WriteTimeout      time.Duration
@@ -91,6 +94,27 @@ func Load() (
 			)
 	}
 
+	readingSaveInterval, err :=
+		getDurationEnv(
+			"READING_SAVE_INTERVAL",
+			time.Minute,
+		)
+
+	if err != nil {
+		return Config{},
+			fmt.Errorf(
+				"invalid READING_SAVE_INTERVAL: %w",
+				err,
+			)
+	}
+
+	if readingSaveInterval < time.Second {
+		return Config{},
+			fmt.Errorf(
+				"READING_SAVE_INTERVAL must be at least 1s",
+			)
+	}
+
 	appEnv :=
 		getEnv(
 			"APP_ENV",
@@ -110,6 +134,8 @@ func Load() (
 		DatabaseURL: databaseURL,
 
 		SessionTTL: sessionTTL,
+
+		ReadingSaveInterval: readingSaveInterval,
 
 		/*
 			Local development uses HTTP,

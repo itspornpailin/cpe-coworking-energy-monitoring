@@ -169,9 +169,10 @@ WHERE zone_id = $1;
 				h.live.Get(nodeID)
 
 			if !ok ||
-				time.Since(
-					reading.UpdatedAt,
-				) > liveReadingMaxAge ||
+				telemetry.IsStale(
+					reading,
+					time.Now(),
+				) ||
 				reading.LightLux == nil {
 
 				continue

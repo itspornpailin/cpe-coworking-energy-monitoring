@@ -13,8 +13,6 @@ import (
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/telemetry"
 )
 
-const liveReadingMaxAge = 5 * time.Minute
-
 type EnvironmentHandler struct {
 	db   *pgxpool.Pool
 	live *telemetry.Store
@@ -182,9 +180,10 @@ FROM zone_sensor_assignments;
 			h.live.Get(nodeID)
 
 		if !ok ||
-			now.Sub(
-				reading.UpdatedAt,
-			) > liveReadingMaxAge {
+			telemetry.IsStale(
+				reading,
+				now,
+			) {
 
 			continue
 		}

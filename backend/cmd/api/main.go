@@ -65,7 +65,10 @@ func main() {
 	)
 
 	liveStore :=
-		telemetry.NewStore(db)
+		telemetry.NewStore(
+			db,
+			cfg.ReadingSaveInterval,
+		)
 
 	go liveStore.Run(
 		appContext,

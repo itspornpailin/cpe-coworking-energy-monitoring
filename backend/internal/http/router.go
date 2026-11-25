@@ -106,6 +106,11 @@ func NewRouter(
 			live,
 		)
 
+	historyHandler :=
+		handler.NewHistoryHandler(
+			db,
+		)
+
 	router.Route(
 		"/api/v1",
 		func(r chi.Router) {
@@ -127,6 +132,11 @@ func NewRouter(
 			r.Get(
 				"/environment-nodes",
 				nodeHandler.List,
+			)
+
+			r.Get(
+				"/environment-history",
+				historyHandler.List,
 			)
 
 			r.Route(

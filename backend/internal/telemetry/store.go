@@ -19,7 +19,58 @@ type LiveReading struct {
 	VibrationRaw *int
 	IsRunning    *bool
 
+	// UpdatedAt is the time the node says it measured (shown to users).
 	UpdatedAt time.Time
+
+	// ReceivedAt is when this server last heard from the node. Staleness uses it,
+	// so a node with a wrong clock is not mistaken for a silent one.
+	ReceivedAt time.Time
+
+	// Interval is a smoothed estimate of the time between this node's messages.
+	Interval time.Duration
+}
+
+const (
+	// A node counts as silent after 3 missed messages.
+	missedMessagesBeforeStale = 3
+
+	minStaleAfter = 30 * time.Second
+	maxStaleAfter = 15 * time.Minute
+
+	// Used until two messages have been seen and the real interval is known.
+	defaultStaleAfter = 5 * time.Minute
+)
+
+// StaleAfter is how long a node may stay quiet before its reading is treated as old.
+// It follows the node's own reporting rhythm instead of a fixed number.
+func StaleAfter(reading LiveReading) time.Duration {
+	if reading.Interval <= 0 {
+		return defaultStaleAfter
+	}
+
+	return min(
+		max(missedMessagesBeforeStale*reading.Interval, minStaleAfter),
+		maxStaleAfter,
+	)
+}
+
+// IsStale reports whether the node has been quiet for too long.
+func IsStale(reading LiveReading, now time.Time) bool {
+	return now.Sub(reading.ReceivedAt) > StaleAfter(reading)
+}
+
+// smoothInterval folds a new gap between messages into the running estimate.
+// Gaps longer than maxStaleAfter mean the node was offline, so they are ignored.
+func smoothInterval(previous, gap time.Duration) time.Duration {
+	if gap <= 0 || gap > maxStaleAfter {
+		return previous
+	}
+
+	if previous <= 0 {
+		return gap
+	}
+
+	return (7*previous + 3*gap) / 10
 }
 
 type hourlyBucket struct {
@@ -51,14 +102,20 @@ type Store struct {
 	live    map[string]LiveReading
 	buckets map[string]*hourlyBucket
 	known   map[string]bool
+
+	// Environment readings are saved to the database at most once per saveInterval per node.
+	saveInterval time.Duration
+	lastSaved    map[string]time.Time
 }
 
-func NewStore(db *pgxpool.Pool) *Store {
+func NewStore(db *pgxpool.Pool, saveInterval time.Duration) *Store {
 	return &Store{
-		db:      db,
-		live:    make(map[string]LiveReading),
-		buckets: make(map[string]*hourlyBucket),
-		known:   make(map[string]bool),
+		db:           db,
+		live:         make(map[string]LiveReading),
+		buckets:      make(map[string]*hourlyBucket),
+		known:        make(map[string]bool),
+		saveInterval: saveInterval,
+		lastSaved:    make(map[string]time.Time),
 	}
 }
 
@@ -90,13 +147,19 @@ func (s *Store) UpdateEnvironment(
 	}
 
 	measuredAt = normalizeTime(measuredAt)
+	now := time.Now()
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	live := s.live[nodeID]
+
+	if !live.ReceivedAt.IsZero() {
+		live.Interval = smoothInterval(live.Interval, now.Sub(live.ReceivedAt))
+	}
+
 	live.NodeID = nodeID
 	live.UpdatedAt = measuredAt
+	live.ReceivedAt = now
 
 	if temperatureC != nil {
 		value := *temperatureC
@@ -110,19 +173,49 @@ func (s *Store) UpdateEnvironment(
 
 	s.live[nodeID] = live
 
-	bucket := s.bucketLocked(nodeID, "environment", measuredAt)
+	// Keep one saved reading per node per saveInterval. Averages over any longer
+	// window (5 minutes, an hour, a day) are worked out later when asked for.
+	save := now.Sub(s.lastSaved[nodeID]) >= s.saveInterval
 
-	if temperatureC != nil {
-		bucket.TemperatureSum += *temperatureC
-		bucket.TemperatureCount++
+	if save {
+		s.lastSaved[nodeID] = now
 	}
 
-	if lightLux != nil {
-		bucket.LightSum += *lightLux
-		bucket.LightCount++
+	s.mu.Unlock()
+
+	if !save {
+		return nil
 	}
 
-	bucket.SampleCount++
+	if err := s.saveEnvironmentReading(ctx, nodeID, temperatureC, lightLux, measuredAt); err != nil {
+		// Try again on the node's next message instead of waiting a full interval.
+		s.mu.Lock()
+		delete(s.lastSaved, nodeID)
+		s.mu.Unlock()
+
+		return err
+	}
+
+	return nil
+}
+
+// saveEnvironmentReading stores one raw reading. A repeated delivery of the same
+// message (MQTT QoS 1 can do that) is ignored.
+func (s *Store) saveEnvironmentReading(
+	ctx context.Context,
+	nodeID string,
+	temperatureC *float64,
+	lightLux *float64,
+	measuredAt time.Time,
+) error {
+	_, err := s.db.Exec(ctx, `
+INSERT INTO environment_readings (node_id, recorded_at, temperature_c, light_lux)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (node_id, recorded_at) DO NOTHING;`,
+		nodeID, measuredAt, temperatureC, lightLux)
+	if err != nil {
+		return fmt.Errorf("save environment reading for %q: %w", nodeID, err)
+	}
 
 	return nil
 }
