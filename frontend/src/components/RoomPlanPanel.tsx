@@ -30,6 +30,42 @@ import type {
   EnvironmentZone,
 } from "../types/environment";
 
+import {
+  LUX_SCALE,
+  TEMPERATURE_SCALE,
+  adaptiveScale,
+  gradientCss,
+  renderHeatmapCached,
+} from "../lib/heatmap";
+
+import type {
+  ColorScale,
+} from "../lib/heatmap";
+
+// What the map shows: coloured zones, or a smooth brightness / temperature field.
+type Layer =
+  | "zones"
+  | "lux"
+  | "temperature";
+
+const HEAT_LAYERS: Record<
+  Exclude<Layer, "zones">,
+  {
+    scale: ColorScale;
+    unit: string;
+  }
+> = {
+  lux: {
+    scale: LUX_SCALE,
+    unit: "lx",
+  },
+
+  temperature: {
+    scale: TEMPERATURE_SCALE,
+    unit: "°C",
+  },
+};
+
 // Admin editing of sensor positions. Leave it out for a read-only map.
 export interface PlanEditing {
   selectedId: string | null;
@@ -107,6 +143,18 @@ const COPY = {
 
     notPlaced: (count: number) =>
       `${count} sensor${count === 1 ? "" : "s"} not placed on the plan yet`,
+
+    layers:
+      "Map layer",
+
+    layerNames: {
+      zones: "Zones",
+      lux: "Brightness",
+      temperature: "Temperature",
+    },
+
+    heatNeedsSensors:
+      "Needs at least 2 sensors with recent data.",
   },
 
   th: {
@@ -139,6 +187,18 @@ const COPY = {
 
     notPlaced: (count: number) =>
       `ยังไม่ได้วางเซนเซอร์ ${count} ตัวบนแผนผัง`,
+
+    layers:
+      "ชั้นข้อมูลบนแผนผัง",
+
+    layerNames: {
+      zones: "โซน",
+      lux: "ความสว่าง",
+      temperature: "อุณหภูมิ",
+    },
+
+    heatNeedsSensors:
+      "ต้องมีเซนเซอร์ที่ส่งข้อมูลล่าสุดอย่างน้อย 2 ตัว",
   },
 } as const;
 
@@ -183,6 +243,12 @@ export function RoomPlanPanel({
 
   const svgRef =
     useRef<SVGSVGElement>(null);
+
+  const [
+    layer,
+    setLayer,
+  ] =
+    useState<Layer>("zones");
 
   // While a marker is being dragged it follows the pointer;
   // the new position is only saved when it is dropped.
@@ -284,6 +350,84 @@ export function RoomPlanPanel({
   const unplacedCount =
     nodes.length -
     placed.length;
+
+  // Heat map: only sensors with a recent value for this layer take part.
+  const heatPoints =
+    layer === "zones"
+      ? []
+      : placed.flatMap(
+          (node) => {
+            const value =
+              layer === "lux"
+                ? node.lightLux
+                : node.temperatureC;
+
+            return node.stale ||
+              value === null
+              ? []
+              : [
+                  {
+                    x: Math.round(
+                      node.x,
+                    ),
+                    y: Math.round(
+                      node.y,
+                    ),
+                    // Rounded so the picture is only redrawn when a value visibly changes.
+                    value:
+                      Math.round(
+                        value * 10,
+                      ) / 10,
+                  },
+                ];
+          },
+        );
+
+  // Brightness keeps a fixed scale (500 lx looks the same all day). Temperature zooms
+  // in on the range actually measured, so a 1-2 degree difference across the room shows.
+  const heatScale =
+    layer === "temperature"
+      ? adaptiveScale(
+          TEMPERATURE_SCALE,
+          heatPoints.map(
+            (point) =>
+              point.value,
+          ),
+          4,
+        )
+      : LUX_SCALE;
+
+  const heatUrl =
+    layer === "zones"
+      ? null
+      : renderHeatmapCached(
+          heatPoints,
+          heatScale,
+        );
+
+  // The number printed under a marker follows the chosen layer.
+  function markerLabel(
+    node: PlacedNode,
+  ): string {
+    const value =
+      layer === "temperature"
+        ? node.temperatureC
+        : node.lightLux;
+
+    if (
+      node.stale ||
+      value === null
+    ) {
+      return "–";
+    }
+
+    return layer ===
+      "temperature"
+      ? value.toFixed(1)
+      : String(
+          Math.round(value),
+        );
+  }
 
   // Converts a pointer position on screen into drawing coordinates.
   function toPlanPoint(
@@ -476,6 +620,37 @@ export function RoomPlanPanel({
       aria-label={copy.alt}
     >
       <figure className="room-plan-figure">
+        <div
+          className="plan-layers"
+          role="group"
+          aria-label={copy.layers}
+        >
+          {(
+            [
+              "zones",
+              "lux",
+              "temperature",
+            ] as const
+          ).map((name) => (
+            <button
+              key={name}
+              type="button"
+              aria-pressed={
+                layer === name
+              }
+              onClick={() =>
+                setLayer(name)
+              }
+            >
+              {
+                copy.layerNames[
+                  name
+                ]
+              }
+            </button>
+          ))}
+        </div>
+
         <div className="map-container">
           {mapFailed ? (
             <div
@@ -541,6 +716,19 @@ export function RoomPlanPanel({
                 }}
               />
 
+              {layer !== "zones" &&
+                heatUrl && (
+                  <image
+                    className="plan-heat-image"
+                    href={heatUrl}
+                    width={PLAN_WIDTH}
+                    height={PLAN_HEIGHT}
+                    preserveAspectRatio="none"
+                    clipPath="url(#room-floor)"
+                  />
+                )}
+
+              {layer === "zones" && (
               <g clipPath="url(#room-floor)">
                 {placed.map(
                   (node, index) => {
@@ -586,6 +774,7 @@ export function RoomPlanPanel({
                   },
                 )}
               </g>
+              )}
 
               {placed.map((node) => {
                 const info =
@@ -706,13 +895,9 @@ export function RoomPlanPanel({
                       y="23"
                       textAnchor="middle"
                     >
-                      {node.stale ||
-                      node.lightLux ===
-                        null
-                        ? "–"
-                        : Math.round(
-                            node.lightLux,
-                          )}
+                      {markerLabel(
+                        node,
+                      )}
                     </text>
                   </g>
                 );
@@ -722,6 +907,64 @@ export function RoomPlanPanel({
         </div>
 
         <div className="plan-legend-wrap">
+          {layer !== "zones" && (
+            <div className="plan-heat-legend">
+              <div
+                className="plan-heat-bar"
+                style={{
+                  background:
+                    gradientCss(
+                      heatScale,
+                    ),
+                }}
+              />
+
+              <div className="plan-heat-ticks">
+                {Array.from(
+                  { length: 5 },
+                  (_, index) => {
+                    const {
+                      min,
+                      max,
+                    } =
+                      heatScale;
+
+                    return (
+                      <span
+                        key={index}
+                      >
+                        {Math.round(
+                          min +
+                            (index *
+                              (max -
+                                min)) /
+                              4,
+                        )}
+                      </span>
+                    );
+                  },
+                )}
+
+                <span className="plan-heat-unit">
+                  {
+                    HEAT_LAYERS[
+                      layer
+                    ].unit
+                  }
+                </span>
+              </div>
+
+              {!heatUrl && (
+                <p className="plan-status">
+                  {
+                    copy.heatNeedsSensors
+                  }
+                </p>
+              )}
+            </div>
+          )}
+
+          {layer === "zones" && (
           <ul className="plan-legend">
             {zones.map((zone) => (
               <li key={zone.areaId}>
@@ -769,6 +1012,7 @@ export function RoomPlanPanel({
               </li>
             )}
           </ul>
+          )}
 
           <p className="plan-status">
             {lastUpdated === null
