@@ -605,13 +605,15 @@ function App() {
           />
         </div>
 
-        <LightingEnergyPanel
-          language={language}
-          isAdmin={isAdmin}
-          nodes={
-            environmentNodes
-          }
-        />
+        {isAdmin && (
+          <LightingEnergyPanel
+            language={language}
+            isAdmin={isAdmin}
+            nodes={
+              environmentNodes
+            }
+          />
+        )}
 
         {isAdmin && (
           <SensorEditor
