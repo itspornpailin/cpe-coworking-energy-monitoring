@@ -145,16 +145,6 @@ func NewRouter(
 				historyHandler.List,
 			)
 
-			r.Get(
-				"/lighting-circuits",
-				lightingCircuitHandler.List,
-			)
-
-			r.Get(
-				"/lighting-energy",
-				lightingCircuitHandler.Energy,
-			)
-
 			r.Route(
 				"/auth",
 				func(r chi.Router) {
@@ -186,6 +176,17 @@ func NewRouter(
 					admin.Patch(
 						"/admin/lighting-zones/{areaID}",
 						lightingHandler.UpdateRule,
+					)
+
+					// The electricity estimate is for admins only.
+					admin.Get(
+						"/lighting-circuits",
+						lightingCircuitHandler.List,
+					)
+
+					admin.Get(
+						"/lighting-energy",
+						lightingCircuitHandler.Energy,
 					)
 
 					admin.Patch(
