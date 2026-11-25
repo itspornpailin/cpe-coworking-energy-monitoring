@@ -1,0 +1,135 @@
+/* =========================================================
+   Room plan overlay: zone colours, sensor markers, legend.
+   Everything inside the <svg> shares the drawing's own
+   870 x 496 coordinate space, so it always lines up.
+   ========================================================= */
+
+.room-plan-svg {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  user-select: none;
+}
+
+:root[data-theme="night"]
+.room-plan-image {
+  filter:
+    brightness(0.93)
+    saturate(0.9);
+
+  opacity: 0.96;
+}
+
+.plan-node {
+  outline: none;
+}
+
+.plan-node-dot {
+  fill: #ffffff;
+  stroke-width: 3.5;
+
+  filter:
+    drop-shadow(
+      0 1px 1.5px
+      rgb(0 0 0 / 35%)
+    );
+}
+
+.plan-node.is-stale .plan-node-dot {
+  fill: #e9eeed;
+  stroke-dasharray: 3 2.5;
+}
+
+.plan-node:focus-visible .plan-node-dot {
+  stroke-width: 5.5;
+}
+
+.plan-node-label {
+  font:
+    700 12px/1
+    system-ui, sans-serif;
+
+  fill: #12372e;
+
+  paint-order: stroke;
+  stroke: #ffffff;
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+}
+
+.plan-node.is-stale .plan-node-label {
+  fill: #6b7b77;
+}
+
+.plan-legend-wrap {
+  display: grid;
+  gap: 4px;
+
+  margin-top: 10px;
+
+  color: var(--text);
+}
+
+:root[data-theme="night"]
+.plan-legend-wrap {
+  color: #d6ece3;
+}
+
+/* On a phone the whole drawing is about 330px wide, so markers need to be drawn larger. */
+@media (max-width: 640px) {
+  .plan-node-dot {
+    r: 12px;
+  }
+
+  .plan-node-label {
+    font-size: 21px;
+    stroke-width: 6px;
+
+    transform: translateY(10px);
+  }
+}
+
+.plan-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+
+  font-size: 12px;
+}
+
+.plan-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plan-legend-chip {
+  width: 12px;
+  height: 12px;
+
+  border:
+    1px solid
+    rgb(0 0 0 / 20%);
+
+  border-radius: 3px;
+}
+
+.plan-legend-stale {
+  border-style: dashed;
+  background: #e9eeed;
+  border-radius: 50%;
+}
+
+.plan-status {
+  margin: 0;
+
+  font-size: 12px;
+  opacity: 0.8;
+}

@@ -15,6 +15,7 @@ import {
 } from "./api/client";
 
 import {
+  getEnvironmentNodes,
   getEnvironmentZones,
 } from "./api/environment";
 
@@ -52,6 +53,7 @@ import type {
 } from "./types/auth";
 
 import type {
+  EnvironmentNode,
   EnvironmentZone,
 } from "./types/environment";
 
@@ -135,6 +137,14 @@ function App() {
     );
 
   const [
+    environmentNodes,
+    setEnvironmentNodes,
+  ] =
+    useState<EnvironmentNode[]>(
+      [],
+    );
+
+  const [
     environmentLoading,
     setEnvironmentLoading,
   ] =
@@ -202,30 +212,65 @@ function App() {
       async (
         signal?: AbortSignal,
       ) => {
-        try {
-          setEnvironmentZones(
-            await getEnvironmentZones(
+        // Zones and nodes load independently, so one failing
+        // endpoint never freezes the other part of the page.
+        const [
+          zones,
+          nodes,
+        ] =
+          await Promise.allSettled([
+            getEnvironmentZones(
               signal,
             ),
-          );
-        } catch (error) {
-          if (
-            error instanceof DOMException &&
-            error.name === "AbortError"
-          ) {
-            return;
-          }
 
-          console.error(
-            "Unable to load environment zones:",
-            error,
+            getEnvironmentNodes(
+              signal,
+            ),
+          ]);
+
+        if (
+          zones.status ===
+          "fulfilled"
+        ) {
+          setEnvironmentZones(
+            zones.value,
           );
-        } finally {
-          if (!signal?.aborted) {
-            setEnvironmentLoading(
-              false,
+        }
+
+        if (
+          nodes.status ===
+          "fulfilled"
+        ) {
+          setEnvironmentNodes(
+            nodes.value,
+          );
+        }
+
+        for (const result of [
+          zones,
+          nodes,
+        ]) {
+          if (
+            result.status ===
+              "rejected" &&
+            !(
+              result.reason instanceof
+                DOMException &&
+              result.reason.name ===
+                "AbortError"
+            )
+          ) {
+            console.error(
+              "Unable to load environment data:",
+              result.reason,
             );
           }
+        }
+
+        if (!signal?.aborted) {
+          setEnvironmentLoading(
+            false,
+          );
         }
       },
       [],
@@ -381,6 +426,12 @@ function App() {
         <div className="digital-twin-layout">
           <RoomPlanPanel
             language={language}
+            zones={
+              environmentZones
+            }
+            nodes={
+              environmentNodes
+            }
           />
 
           <EnvironmentSidebar

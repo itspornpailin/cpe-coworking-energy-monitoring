@@ -11,6 +11,7 @@ import App from "./App.tsx";
 import "./styles.css";
 import "./auth.css";
 import "./aero.css";
+import "./roomOverlay.css";
 
 const rootElement =
   document.getElementById(
