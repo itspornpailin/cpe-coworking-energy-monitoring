@@ -40,6 +40,10 @@ import {
 } from "./components/Header";
 
 import {
+  LightingEnergyPanel,
+} from "./components/LightingEnergyPanel";
+
+import {
   LoginModal,
 } from "./components/LoginModal";
 
@@ -600,6 +604,14 @@ function App() {
             }
           />
         </div>
+
+        <LightingEnergyPanel
+          language={language}
+          isAdmin={isAdmin}
+          nodes={
+            environmentNodes
+          }
+        />
 
         {isAdmin && (
           <SensorEditor

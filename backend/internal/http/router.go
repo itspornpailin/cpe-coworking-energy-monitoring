@@ -111,6 +111,12 @@ func NewRouter(
 			db,
 		)
 
+	lightingCircuitHandler :=
+		handler.NewLightingCircuitHandler(
+			db,
+			live,
+		)
+
 	router.Route(
 		"/api/v1",
 		func(r chi.Router) {
@@ -137,6 +143,16 @@ func NewRouter(
 			r.Get(
 				"/environment-history",
 				historyHandler.List,
+			)
+
+			r.Get(
+				"/lighting-circuits",
+				lightingCircuitHandler.List,
+			)
+
+			r.Get(
+				"/lighting-energy",
+				lightingCircuitHandler.Energy,
 			)
 
 			r.Route(
@@ -170,6 +186,16 @@ func NewRouter(
 					admin.Patch(
 						"/admin/lighting-zones/{areaID}",
 						lightingHandler.UpdateRule,
+					)
+
+					admin.Patch(
+						"/admin/lighting-circuits/{circuitID}",
+						lightingCircuitHandler.Update,
+					)
+
+					admin.Put(
+						"/admin/lighting-circuits/{circuitID}/nodes",
+						lightingCircuitHandler.SetNodes,
 					)
 
 					admin.Post(

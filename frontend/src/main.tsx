@@ -13,6 +13,7 @@ import "./auth.css";
 import "./aero.css";
 import "./roomOverlay.css";
 import "./adminEditor.css";
+import "./lightingEnergy.css";
 
 const rootElement =
   document.getElementById(

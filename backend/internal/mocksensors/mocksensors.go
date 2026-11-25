@@ -140,7 +140,32 @@ SELECT id, $2 FROM zones WHERE code = $1
 ON CONFLICT DO NOTHING;`, n.Zone, n.ID); err != nil {
 			return err
 		}
+
+		if _, err := db.Exec(ctx, `
+INSERT INTO lighting_circuit_nodes (circuit_id, node_id)
+SELECT id, $2 FROM lighting_circuits WHERE code = $1
+ON CONFLICT DO NOTHING;`, demoCircuit[n.ID], n.ID); err != nil {
+			return err
+		}
 	}
 
-	return nil
+	// Demo thresholds so the circuits show ON/OFF. Real ones come from switching the lights on and off
+	// once the sensors are installed, so only circuits that are not calibrated yet are touched.
+	_, err := db.Exec(ctx, `
+UPDATE lighting_circuits
+SET on_above_lux = 250, off_below_lux = 120
+WHERE on_above_lux IS NULL;`)
+
+	return err
+}
+
+// Which lighting circuit each demo node is placed under.
+var demoCircuit = map[string]string{
+	"demo_env_01": "LP-1",
+	"demo_env_02": "LP-3",
+	"demo_env_03": "LP-3",
+	"demo_env_04": "LP-5",
+	"demo_env_05": "LP-5",
+	"demo_env_06": "LP-7",
+	"demo_env_07": "LP-9",
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/config"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/database"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/ingest"
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/lighting"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/mocksensors"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/telemetry"
 
@@ -71,6 +72,15 @@ func main() {
 		)
 
 	go liveStore.Run(
+		appContext,
+	)
+
+	go lighting.NewEngine(
+		db,
+		liveStore,
+		cfg.LightingCheckInterval,
+		cfg.LightingConfirmFor,
+	).Run(
 		appContext,
 	)
 
