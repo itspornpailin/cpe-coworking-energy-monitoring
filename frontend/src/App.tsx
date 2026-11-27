@@ -5,6 +5,14 @@ import {
 } from "react";
 
 import {
+  createZone,
+  deleteZone,
+  renameZone,
+  setNodePosition,
+  setNodeZone,
+} from "./api/admin";
+
+import {
   getAuthState,
   loginAdmin,
   logoutAdmin,
@@ -15,6 +23,7 @@ import {
 } from "./api/client";
 
 import {
+  getEnvironmentNodes,
   getEnvironmentZones,
 } from "./api/environment";
 
@@ -31,6 +40,10 @@ import {
 } from "./components/Header";
 
 import {
+  AcEnergyPanel,
+} from "./components/AcEnergyPanel";
+
+import {
   LoginModal,
 } from "./components/LoginModal";
 
@@ -39,8 +52,14 @@ import {
 } from "./components/RoomPlanPanel";
 
 import {
+  SensorEditor,
+} from "./components/SensorEditor";
+
+import {
   translations,
 } from "./i18n/translations";
+
+import { AwarenessSection } from "./components/AwarenessSection";
 
 import type {
   Language,
@@ -52,6 +71,7 @@ import type {
 } from "./types/auth";
 
 import type {
+  EnvironmentNode,
   EnvironmentZone,
 } from "./types/environment";
 
@@ -135,10 +155,36 @@ function App() {
     );
 
   const [
+    environmentNodes,
+    setEnvironmentNodes,
+  ] =
+    useState<EnvironmentNode[]>(
+      [],
+    );
+
+  const [
     environmentLoading,
     setEnvironmentLoading,
   ] =
     useState(true);
+
+  // True when the last refresh could not reach the server.
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  // Admin sensor editing: whether markers can be dragged, and which sensor is selected.
+  const [
+    editMode,
+    setEditMode,
+  ] =
+    useState(false);
+
+  const [
+    selectedNodeId,
+    setSelectedNodeId,
+  ] =
+    useState<string | null>(
+      null,
+    );
 
   useEffect(() => {
     document.documentElement.dataset.theme =
@@ -202,30 +248,75 @@ function App() {
       async (
         signal?: AbortSignal,
       ) => {
-        try {
-          setEnvironmentZones(
-            await getEnvironmentZones(
+        // Zones and nodes load independently, so one failing
+        // endpoint never freezes the other part of the page.
+        const [
+          zones,
+          nodes,
+        ] =
+          await Promise.allSettled([
+            getEnvironmentZones(
               signal,
             ),
-          );
-        } catch (error) {
-          if (
-            error instanceof DOMException &&
-            error.name === "AbortError"
-          ) {
-            return;
-          }
 
-          console.error(
-            "Unable to load environment zones:",
-            error,
+            getEnvironmentNodes(
+              signal,
+            ),
+          ]);
+
+        if (
+          zones.status ===
+          "fulfilled"
+        ) {
+          // Oldest zone first, so a newly added zone goes to the end of the list.
+          setEnvironmentZones(
+            [...zones.value].sort(
+              (a, b) =>
+                a.areaId -
+                b.areaId,
+            ),
           );
-        } finally {
-          if (!signal?.aborted) {
-            setEnvironmentLoading(
-              false,
+        }
+
+        if (
+          nodes.status ===
+          "fulfilled"
+        ) {
+          setEnvironmentNodes(
+            nodes.value,
+          );
+        }
+
+        for (const result of [
+          zones,
+          nodes,
+        ]) {
+          if (
+            result.status ===
+              "rejected" &&
+            !(
+              result.reason instanceof
+                DOMException &&
+              result.reason.name ===
+                "AbortError"
+            )
+          ) {
+            console.error(
+              "Unable to load environment data:",
+              result.reason,
             );
           }
+        }
+
+        if (!signal?.aborted) {
+          setEnvironmentLoading(
+            false,
+          );
+
+          setLoadFailed(
+            zones.status === "rejected" ||
+              nodes.status === "rejected",
+          );
         }
       },
       [],
@@ -258,7 +349,7 @@ function App() {
             controller.signal,
           );
         },
-        10_000,
+        2_000,
       );
 
     return () => {
@@ -310,6 +401,9 @@ function App() {
       setAuth(
         await logoutAdmin(),
       );
+
+      setEditMode(false);
+      setSelectedNodeId(null);
     } catch {
       setAuthError(
         "requestFailed",
@@ -337,6 +431,96 @@ function App() {
 
     await loadEnvironment();
   }
+
+  // Admin sensor editing. Each handler saves, then reloads so the page shows what the server has.
+  // Errors are thrown on purpose: SensorEditor shows them to the admin.
+  async function handleNodeMove(
+    nodeId: string,
+    x: number,
+    y: number,
+  ) {
+    // Show the new position straight away so the marker does not jump back
+    // while the save is in flight.
+    setEnvironmentNodes(
+      (current) =>
+        current.map((node) =>
+          node.nodeId === nodeId
+            ? { ...node, x, y }
+            : node,
+        ),
+    );
+
+    try {
+      await setNodePosition(
+        nodeId,
+        { x, y },
+      );
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  async function handleRemoveFromPlan(
+    nodeId: string,
+  ) {
+    try {
+      await setNodePosition(
+        nodeId,
+        null,
+      );
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  async function handleSetNodeZone(
+    nodeId: string,
+    zoneId: number | null,
+  ) {
+    try {
+      await setNodeZone(
+        nodeId,
+        zoneId,
+      );
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  async function handleCreateZone(
+    name: string,
+  ) {
+    await createZone(name);
+
+    await loadEnvironment();
+  }
+
+  async function handleRenameZone(
+    areaId: number,
+    name: string,
+  ) {
+    try {
+      await renameZone(
+        areaId,
+        name,
+      );
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  async function handleDeleteZone(
+    areaId: number,
+  ) {
+    try {
+      await deleteZone(areaId);
+    } finally {
+      await loadEnvironment();
+    }
+  }
+
+  const isAdmin =
+    auth.role === "admin";
 
   const authErrorMessage =
     authError === null
@@ -378,9 +562,64 @@ function App() {
       />
 
       <main className="main-content">
+        {loadFailed ? (
+          <p className="status-strip is-error" role="alert">
+            {translations[language].status.offline}
+          </p>
+        ) : (
+          environmentNodes.length > 0 && (
+            <p className="status-strip">
+              {translations[language].status.reporting}:{" "}
+              {environmentNodes.filter((node) => !node.stale).length} /{" "}
+              {environmentNodes.length}
+            </p>
+          )
+        )}
+
         <div className="digital-twin-layout">
           <RoomPlanPanel
             language={language}
+            zones={
+              environmentZones
+            }
+            nodes={
+              environmentNodes
+            }
+            zonePicker={
+              isAdmin
+                ? {
+                    onAssign:
+                      handleSetNodeZone,
+                  }
+                : undefined
+            }
+            editing={
+              isAdmin && editMode
+                ? {
+                    selectedId:
+                      selectedNodeId,
+                    onSelect:
+                      setSelectedNodeId,
+                    onMove: (
+                      nodeId,
+                      x,
+                      y,
+                    ) => {
+                      void handleNodeMove(
+                        nodeId,
+                        x,
+                        y,
+                      ).catch(
+                        (error) =>
+                          console.error(
+                            "Unable to move sensor:",
+                            error,
+                          ),
+                      );
+                    },
+                  }
+                : undefined
+            }
           />
 
           <EnvironmentSidebar
@@ -397,6 +636,54 @@ function App() {
             }
           />
         </div>
+
+        {isAdmin && (
+          <AcEnergyPanel
+            language={language}
+            nodes={
+              environmentNodes
+            }
+          />
+        )}
+
+        {isAdmin && (
+          <SensorEditor
+            language={language}
+            nodes={
+              environmentNodes
+            }
+            zones={
+              environmentZones
+            }
+            editMode={editMode}
+            onEditModeChange={
+              setEditMode
+            }
+            selectedNodeId={
+              selectedNodeId
+            }
+            onSelectNode={
+              setSelectedNodeId
+            }
+            onSetNodeZone={
+              handleSetNodeZone
+            }
+            onRemoveFromPlan={
+              handleRemoveFromPlan
+            }
+            onCreateZone={
+              handleCreateZone
+            }
+            onRenameZone={
+              handleRenameZone
+            }
+            onDeleteZone={
+              handleDeleteZone
+            }
+          />
+        )}
+
+        <AwarenessSection language={language} />
       </main>
 
       <LoginModal

@@ -12,6 +12,7 @@ import (
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/auth"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/config"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http/handler"
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/telemetry"
 
 	appmiddleware "github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http/middleware"
 )
@@ -20,6 +21,7 @@ func NewRouter(
 	cfg config.Config,
 	startedAt time.Time,
 	db *pgxpool.Pool,
+	live *telemetry.Store,
 ) http.Handler {
 	router := chi.NewRouter()
 
@@ -50,6 +52,7 @@ func NewRouter(
 					http.MethodGet,
 					http.MethodPost,
 					http.MethodPatch,
+					http.MethodPut,
 					http.MethodDelete,
 					http.MethodOptions,
 				},
@@ -88,11 +91,30 @@ func NewRouter(
 	lightingHandler :=
 		handler.NewLightingHandler(
 			db,
+			live,
 		)
 
 	environmentHandler :=
 		handler.NewEnvironmentHandler(
 			db,
+			live,
+		)
+
+	nodeHandler :=
+		handler.NewNodeHandler(
+			db,
+			live,
+		)
+
+	historyHandler :=
+		handler.NewHistoryHandler(
+			db,
+		)
+
+	acEnergyHandler :=
+		handler.NewACEnergyHandler(
+			db,
+			live,
 		)
 
 	router.Route(
@@ -111,6 +133,16 @@ func NewRouter(
 			r.Get(
 				"/environment-zones",
 				environmentHandler.List,
+			)
+
+			r.Get(
+				"/environment-nodes",
+				nodeHandler.List,
+			)
+
+			r.Get(
+				"/environment-history",
+				historyHandler.List,
 			)
 
 			r.Route(
@@ -144,6 +176,42 @@ func NewRouter(
 					admin.Patch(
 						"/admin/lighting-zones/{areaID}",
 						lightingHandler.UpdateRule,
+					)
+
+					// The electricity estimate is for admins only.
+					admin.Get(
+						"/ac-energy",
+						acEnergyHandler.Energy,
+					)
+
+					admin.Put(
+						"/admin/ac-units/{nodeID}",
+						acEnergyHandler.SetSpecs,
+					)
+
+					admin.Post(
+						"/admin/zones",
+						environmentHandler.Create,
+					)
+
+					admin.Patch(
+						"/admin/zones/{zoneID}",
+						environmentHandler.Rename,
+					)
+
+					admin.Delete(
+						"/admin/zones/{zoneID}",
+						environmentHandler.Delete,
+					)
+
+					admin.Put(
+						"/admin/nodes/{nodeID}/zone",
+						nodeHandler.SetZone,
+					)
+
+					admin.Put(
+						"/admin/nodes/{nodeID}/position",
+						nodeHandler.SetPosition,
 					)
 				},
 			)

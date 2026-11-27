@@ -4,8 +4,19 @@ import {
 } from "react";
 
 import type {
+  CSSProperties,
+} from "react";
+
+import {
+  zoneColors,
+  zoneDisplayName,
+} from "../lib/zones";
+
+import type {
   Language,
 } from "../i18n/translations";
+
+import { luxMeter } from "../lib/luxMeter";
 
 import type {
   UserRole,
@@ -162,30 +173,6 @@ const COPY = {
 } as const;
 
 
-/*
- * Keep the backend code (ILL-A, ILL-B, ILL-C)
- * internally, but show simple user-facing names.
- */
-function getZoneDisplayName(
-  zone: EnvironmentZone,
-  language: Language,
-) {
-  const suffix =
-    zone.code
-      .split("-")
-      .at(-1)
-      ?.toUpperCase();
-
-  if (!suffix) {
-    return zone.name;
-  }
-
-  return language === "th"
-    ? `โซน ${suffix}`
-    : `Zone ${suffix}`;
-}
-
-
 export function EnvironmentSidebar({
   language,
   role,
@@ -195,6 +182,9 @@ export function EnvironmentSidebar({
 }: EnvironmentSidebarProps) {
   const copy =
     COPY[language];
+
+  const colors =
+    zoneColors(zones);
 
   const [
     editingZone,
@@ -411,12 +401,19 @@ export function EnvironmentSidebar({
                   <div className="environment-zone-top">
                     <div>
                       <h3>
-                        {
-                          getZoneDisplayName(
+                        <span
+                          className="zone-badge"
+                          style={{
+                            "--zone": colors.get(
+                              zone.areaId,
+                            ),
+                          } as CSSProperties}
+                        >
+                          {zoneDisplayName(
                             zone,
                             language,
-                          )
-                        }
+                          )}
+                        </span>
                       </h3>
                     </div>
 
@@ -472,6 +469,36 @@ export function EnvironmentSidebar({
                     </div>
                   </div>
 
+
+                  {zone.lightingMode === "bright_required" &&
+                    zone.averageLux !== null && (
+                      <div className="lux-meter">
+                        <div className="lux-meter-track" aria-hidden="true">
+                          <div
+                            className="lux-meter-fill"
+                            style={{
+                              width: `${luxMeter(zone.averageLux, zone.minLux).fill}%`,
+                            }}
+                          />
+                          <span
+                            className="lux-meter-mark"
+                            style={{
+                              left: `${luxMeter(zone.averageLux, zone.minLux).mark}%`,
+                            }}
+                          />
+                        </div>
+                        <p>
+                          <span>
+                            {language === "th"
+                              ? `${Math.round(zone.averageLux)} จากขั้นต่ำ ${zone.minLux} ลักซ์`
+                              : `${Math.round(zone.averageLux)} of ${zone.minLux} lux minimum`}
+                          </span>
+                          <a href="#awareness">
+                            {language === "th" ? "ทำไม?" : "Why?"}
+                          </a>
+                        </p>
+                      </div>
+                    )}
 
                   <div className="environment-policy-row">
                     <span>
@@ -564,7 +591,7 @@ export function EnvironmentSidebar({
                 <div>
                   <span className="settings-modal-zone">
                     {
-                      getZoneDisplayName(
+                      zoneDisplayName(
                         editingZone,
                         language,
                       )

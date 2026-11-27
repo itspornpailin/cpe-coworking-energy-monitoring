@@ -8,7 +8,19 @@ export type Theme =
 
 export const translations = {
   en: {
+    status: {
+      reporting: "Sensors reporting",
+      offline:
+        "Cannot reach the server. The values on this page may be missing or out of date.",
+    },
+
     header: {
+      brand:
+        "CPE Co-Working Space",
+
+      brandSubtitle:
+        "Environment Monitoring Dashboard",
+
       subtitle:
         "Illuminance & Temperature Monitoring",
 
@@ -123,7 +135,19 @@ export const translations = {
   },
 
   th: {
+    status: {
+      reporting: "เซนเซอร์ที่ส่งข้อมูล",
+      offline:
+        "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ค่าบนหน้านี้อาจไม่แสดงหรือไม่เป็นปัจจุบัน",
+    },
+
     header: {
+      brand:
+        "CPE Co-Working Space",
+
+      brandSubtitle:
+        "แดชบอร์ดติดตามสภาพแวดล้อม",
+
       subtitle:
         "ติดตามค่าความส่องสว่างและอุณหภูมิ",
 

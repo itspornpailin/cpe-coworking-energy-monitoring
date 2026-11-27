@@ -24,6 +24,8 @@ import (
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/config"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/database"
 	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/ingest"
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/mocksensors"
+	"github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/telemetry"
 
 	httpserver "github.com/itspornpailin/cpe-coworking-energy-monitoring/backend/internal/http"
 )
@@ -39,7 +41,11 @@ func main() {
 		)
 	}
 
-	appContext := context.Background()
+	appContext, cancelApp :=
+		context.WithCancel(
+			context.Background(),
+		)
+	defer cancelApp()
 
 	db, err := database.Connect(
 		appContext,
@@ -58,8 +64,47 @@ func main() {
 		"successfully connected to PostgreSQL",
 	)
 
+	liveStore :=
+		telemetry.NewStore(
+			db,
+			cfg.ReadingSaveInterval,
+		)
+
+	go liveStore.Run(
+		appContext,
+	)
+
+	if os.Getenv("MOCK_SENSORS") == "true" {
+		if cfg.AppEnv != "development" {
+			log.Fatal(
+				"MOCK_SENSORS=true is only allowed when APP_ENV=development",
+			)
+		}
+
+		intervalText := os.Getenv("MOCK_SENSOR_INTERVAL")
+		if intervalText == "" {
+			intervalText = "10s"
+		}
+
+		interval, err := time.ParseDuration(intervalText)
+		if err != nil || interval < time.Second {
+			log.Fatal(
+				"MOCK_SENSOR_INTERVAL must be a duration of at least 1s, for example 10s",
+			)
+		}
+
+		go mocksensors.Run(
+			appContext,
+			db,
+			liveStore,
+			interval,
+		)
+	}
+
 	mqttSubscriber, err :=
-		ingest.StartFromEnv(db)
+		ingest.StartFromEnv(
+			liveStore,
+		)
 
 	if err != nil {
 		log.Fatalf(
@@ -80,6 +125,7 @@ func main() {
 		cfg,
 		startedAt,
 		db,
+		liveStore,
 	)
 
 	server := &http.Server{

@@ -8,9 +8,8 @@ import {
 
 import App from "./App.tsx";
 
-import "./styles.css";
-import "./auth.css";
-import "./aero.css";
+import "./tokens.css";
+import "./app.css";
 
 const rootElement =
   document.getElementById(

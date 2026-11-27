@@ -153,6 +153,44 @@ export function apiPost<T>(
   );
 }
 
+export function apiPut<T>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  return apiRequest<T>(
+    path,
+    {
+      method: "PUT",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+
+      body:
+        JSON.stringify(
+          body,
+        ),
+
+      signal,
+    },
+  );
+}
+
+export function apiDelete<T>(
+  path: string,
+  signal?: AbortSignal,
+): Promise<T> {
+  return apiRequest<T>(
+    path,
+    {
+      method: "DELETE",
+      signal,
+    },
+  );
+}
+
 export function apiPatch<T>(
   path: string,
   body: unknown,
