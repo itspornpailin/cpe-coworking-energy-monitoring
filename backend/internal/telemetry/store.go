@@ -240,11 +240,19 @@ func (s *Store) UpdateAC(
 	}
 
 	measuredAt = normalizeTime(measuredAt)
+	now := time.Now()
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	live := s.live[nodeID]
+
+	// Without these an air conditioner node always looks silent.
+	if !live.ReceivedAt.IsZero() {
+		live.Interval = smoothInterval(live.Interval, now.Sub(live.ReceivedAt))
+	}
+
+	live.ReceivedAt = now
 	live.NodeID = nodeID
 	live.UpdatedAt = measuredAt
 

@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -64,5 +65,20 @@ func TestIsStaleUsesArrivalTimeNotTheDeviceClock(t *testing.T) {
 
 	if !IsStale(silent, now) {
 		t.Error("a 10s node silent for 2 minutes must be stale")
+	}
+}
+
+func TestUpdateACMarksTheNodeAsHeardFrom(t *testing.T) {
+	s := NewStore(nil, time.Minute)
+	s.known["ac_01"] = true // already registered, so no database is needed
+
+	running := true
+	if err := s.UpdateAC(context.Background(), "ac_01", nil, &running, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+
+	reading, ok := s.Get("ac_01")
+	if !ok || IsStale(reading, time.Now()) {
+		t.Fatalf("fresh AC reading is stale: ok=%v, received %v", ok, reading.ReceivedAt)
 	}
 }
