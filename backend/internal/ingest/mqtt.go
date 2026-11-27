@@ -21,8 +21,16 @@ type Subscriber struct {
 
 	client mqtt.Client
 
-	envTopic string
-	acTopic  string
+	envTopic  string
+	acTopic   string
+	doorTopic string
+}
+
+type doorPayload struct {
+	NodeID    string `json:"node_id"`
+	Direction string `json:"direction"`
+
+	Timestamp *time.Time `json:"timestamp"`
 }
 
 type envPayload struct {
@@ -76,6 +84,11 @@ func StartFromEnv(
 		acTopic: envOr(
 			"MQTT_AC_TOPIC",
 			"greenoffice/sensor/ac/+",
+		),
+
+		doorTopic: envOr(
+			"MQTT_DOOR_TOPIC",
+			"greenoffice/sensor/door/+",
 		),
 	}
 
@@ -132,6 +145,12 @@ func StartFromEnv(
 				client,
 				subscriber.acTopic,
 				subscriber.handleAC,
+			)
+
+			subscriber.subscribe(
+				client,
+				subscriber.doorTopic,
+				subscriber.handleDoor,
 			)
 		},
 	)
@@ -329,6 +348,63 @@ func (s *Subscriber) handleAC(
 			err,
 		)
 	}
+}
+
+func (s *Subscriber) handleDoor(
+	_ mqtt.Client,
+	message mqtt.Message,
+) {
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		5*time.Second,
+	)
+	defer cancel()
+
+	var payload doorPayload
+
+	if err := json.Unmarshal(
+		message.Payload(),
+		&payload,
+	); err != nil {
+
+		log.Printf(
+			"invalid door payload: %v",
+			err,
+		)
+
+		return
+	}
+
+	nodeID := canonicalDoorNodeID(payload.NodeID)
+	if nodeID == "" {
+		nodeID = canonicalDoorNodeID(
+			topicSuffix(message.Topic()),
+		)
+	}
+
+	if err := s.store.RecordDoor(
+		ctx,
+		nodeID,
+		payload.Direction,
+		chooseTimestamp(payload.Timestamp),
+	); err != nil {
+
+		log.Printf(
+			"door ingest failed: %v",
+			err,
+		)
+	}
+}
+
+// The doors may call themselves "left"/"right" or "door_left"/"door_right".
+func canonicalDoorNodeID(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+
+	if value == "left" || value == "right" {
+		return "door_" + value
+	}
+
+	return value
 }
 
 func chooseTimestamp(
