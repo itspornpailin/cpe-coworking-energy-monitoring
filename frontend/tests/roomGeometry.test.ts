@@ -2,63 +2,20 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import {
-  PLAN_HEIGHT,
-  PLAN_WIDTH,
-  nearestSiteCells,
-} from "../src/lib/roomGeometry.ts";
+import { isInRoom } from "../src/lib/roomDistance.ts";
 
 import type { Point } from "../src/lib/roomGeometry.ts";
 
-function area(polygon: readonly Point[]): number {
-  let twice = 0;
+test("the area outside the walls is not part of the room", () => {
+  const outside: Point[] = [[270, 190], [330, 150], [220, 230], [220, 330], [200, 450], [800, 470]];
 
-  polygon.forEach(([x, y], i) => {
-    const [nx, ny] = polygon[(i + 1) % polygon.length];
-    twice += x * ny - nx * y;
-  });
-
-  return Math.abs(twice) / 2;
-}
-
-test("one site owns the whole drawing", () => {
-  const [cell] = nearestSiteCells([[100, 100]]);
-
-  assert.equal(area(cell), PLAN_WIDTH * PLAN_HEIGHT);
+  assert.deepEqual(outside.filter(isInRoom), []);
 });
 
-test("cells tile the drawing without gaps or overlap", () => {
-  const sites: Point[] = [
-    [89, 171],
-    [466.5, 210],
-    [361, 389],
-    [619, 115],
-    [793.5, 115],
-    [619, 333.5],
-    [793.5, 333.5],
-  ];
+test("every sensor position on the drawing is inside the room", () => {
+  const sensors: Point[] = [[130, 175], [619, 120], [781, 120], [477, 210], [619, 328], [781, 328], [381, 382]];
+  // Floor just beside the outside area, so the cut is not too wide.
+  const edges: Point[] = [[270, 60], [170, 250], [370, 200], [300, 300], [60, 390]];
 
-  const cells = nearestSiteCells(sites);
-  const total = cells.reduce((sum, cell) => sum + area(cell), 0);
-
-  assert.ok(Math.abs(total - PLAN_WIDTH * PLAN_HEIGHT) < 1e-6, `total area ${total}`);
-});
-
-test("two sites are split halfway between them", () => {
-  const [left, right] = nearestSiteCells([
-    [200, 250],
-    [600, 250],
-  ]);
-
-  assert.ok(Math.abs(area(left) - 400 * PLAN_HEIGHT) < 1e-6);
-  assert.ok(Math.abs(area(right) - 470 * PLAN_HEIGHT) < 1e-6);
-});
-
-test("two sites at the same spot still produce cells", () => {
-  const cells = nearestSiteCells([
-    [100, 100],
-    [100, 100],
-  ]);
-
-  assert.equal(cells.length, 2);
+  assert.deepEqual([...sensors, ...edges].filter((point) => !isInRoom(point)), []);
 });

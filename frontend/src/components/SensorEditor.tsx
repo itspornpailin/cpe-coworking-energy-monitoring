@@ -49,7 +49,7 @@ const COPY = {
     title: "Sensors and zones",
 
     intro:
-      "Choose which zone each sensor belongs to. The zone's lux and the map colours follow right away.",
+      "Choose which zone each sensor belongs to, here or by clicking a sensor on the map. The zone's lux and the map borders follow right away.",
 
     editOn: "Move sensors on the map",
     editOff: "Done moving",
@@ -87,7 +87,7 @@ const COPY = {
     title: "เซนเซอร์และโซน",
 
     intro:
-      "เลือกว่าเซนเซอร์แต่ละตัวอยู่ในโซนใด ค่าความสว่างของโซนและสีบนแผนผังจะเปลี่ยนตามทันที",
+      "เลือกว่าเซนเซอร์แต่ละตัวอยู่ในโซนใด จากที่นี่หรือคลิกเซนเซอร์บนแผนผัง ค่าความสว่างและเส้นแบ่งโซนจะเปลี่ยนตามทันที",
 
     editOn: "ย้ายเซนเซอร์บนแผนผัง",
     editOff: "เสร็จสิ้น",

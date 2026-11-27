@@ -1,0 +1,64 @@
+/*
+ * The only place colours are defined. Every text colour here is chosen to reach
+ * at least 4.5:1 against the surfaces it is used on, in both themes.
+ */
+:root {
+  color-scheme: light;
+
+  --page: #f2f5ef;
+  --surface: #ffffff;
+  --surface-soft: #e9efe5;
+  --border: #c5d3c2;
+
+  --text: #17251c;
+  --muted: #45554a;
+
+  --accent: #2c6b43;
+  --accent-hover: #235636;
+  --accent-soft: #dcebdd;
+  --on-accent: #ffffff;
+
+  --danger-text: #8f1d14;
+  --danger-bg: #fdecea;
+  --danger-border: #d9867e;
+
+  --warn-text: #6e4300;
+  --warn-bg: #fdf0d5;
+  --warn-border: #d3a24a;
+
+  /* The room drawing has dark lines, so its backdrop stays light in both themes. */
+  --map-bg: #f7f9f5;
+
+  --shadow: 0 1px 3px rgb(23 37 28 / 10%), 0 6px 18px rgb(23 37 28 / 6%);
+
+  font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", Roboto, sans-serif;
+}
+
+:root[data-theme="night"] {
+  color-scheme: dark;
+
+  --page: #222e27;
+  --surface: #2c3a32;
+  --surface-soft: #36463c;
+  --border: #536a5a;
+
+  --text: #eef4ef;
+  --muted: #c6d4ca;
+
+  --accent: #9bd8ae;
+  --accent-hover: #b5e6c4;
+  --accent-soft: #3b5747;
+  --on-accent: #0f2016;
+
+  --danger-text: #ffd0ca;
+  --danger-bg: #50302c;
+  --danger-border: #b96f66;
+
+  --warn-text: #ffe2a8;
+  --warn-bg: #4c3e20;
+  --warn-border: #9a7c3d;
+
+  --map-bg: #e4ebe5;
+
+  --shadow: 0 1px 3px rgb(0 0 0 / 30%);
+}

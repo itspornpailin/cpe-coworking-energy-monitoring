@@ -40,8 +40,8 @@ import {
 } from "./components/Header";
 
 import {
-  LightingEnergyPanel,
-} from "./components/LightingEnergyPanel";
+  AcEnergyPanel,
+} from "./components/AcEnergyPanel";
 
 import {
   LoginModal,
@@ -58,6 +58,8 @@ import {
 import {
   translations,
 } from "./i18n/translations";
+
+import { AwarenessSection } from "./components/AwarenessSection";
 
 import type {
   Language,
@@ -165,6 +167,9 @@ function App() {
     setEnvironmentLoading,
   ] =
     useState(true);
+
+  // True when the last refresh could not reach the server.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // Admin sensor editing: whether markers can be dragged, and which sensor is selected.
   const [
@@ -306,6 +311,11 @@ function App() {
         if (!signal?.aborted) {
           setEnvironmentLoading(
             false,
+          );
+
+          setLoadFailed(
+            zones.status === "rejected" ||
+              nodes.status === "rejected",
           );
         }
       },
@@ -552,6 +562,20 @@ function App() {
       />
 
       <main className="main-content">
+        {loadFailed ? (
+          <p className="status-strip is-error" role="alert">
+            {translations[language].status.offline}
+          </p>
+        ) : (
+          environmentNodes.length > 0 && (
+            <p className="status-strip">
+              {translations[language].status.reporting}:{" "}
+              {environmentNodes.filter((node) => !node.stale).length} /{" "}
+              {environmentNodes.length}
+            </p>
+          )
+        )}
+
         <div className="digital-twin-layout">
           <RoomPlanPanel
             language={language}
@@ -560,6 +584,14 @@ function App() {
             }
             nodes={
               environmentNodes
+            }
+            zonePicker={
+              isAdmin
+                ? {
+                    onAssign:
+                      handleSetNodeZone,
+                  }
+                : undefined
             }
             editing={
               isAdmin && editMode
@@ -606,9 +638,8 @@ function App() {
         </div>
 
         {isAdmin && (
-          <LightingEnergyPanel
+          <AcEnergyPanel
             language={language}
-            isAdmin={isAdmin}
             nodes={
               environmentNodes
             }
@@ -651,6 +682,8 @@ function App() {
             }
           />
         )}
+
+        <AwarenessSection language={language} />
       </main>
 
       <LoginModal

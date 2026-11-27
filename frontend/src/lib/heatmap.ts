@@ -8,6 +8,12 @@ import {
   PLAN_WIDTH,
 } from "./roomGeometry.ts";
 
+import {
+  GRID,
+  GRID_COLUMNS,
+  distanceField,
+} from "./roomDistance.ts";
+
 export interface HeatPoint {
   x: number;
   y: number;
@@ -25,17 +31,18 @@ export interface ColorScale {
   stops: readonly (readonly [number, Rgb])[];
 }
 
-// Brightness: dark purple (dim) to yellow (bright). 500 lx, the usual office
-// minimum, sits in the middle of the scale.
+// Brightness: warm grey (dim) to butter yellow (bright), always getting lighter, like a
+// room lighting up. No warm-to-cool hues, so it cannot read as temperature, and no
+// near-black end, which looked gloomy. 500 lx, the usual office minimum, is the middle.
 export const LUX_SCALE: ColorScale = {
   min: 0,
   max: 1000,
   stops: [
-    [0, [13, 8, 135]],
-    [0.25, [106, 0, 168]],
-    [0.5, [204, 71, 120]],
-    [0.75, [248, 149, 64]],
-    [1, [240, 249, 33]],
+    [0, [138, 136, 130]],
+    [0.25, [176, 172, 162]],
+    [0.5, [210, 204, 186]],
+    [0.75, [244, 228, 156]],
+    [1, [255, 238, 100]],
   ],
 };
 
@@ -87,19 +94,19 @@ export function interpolate(
   points: readonly HeatPoint[],
   x: number,
   y: number,
+  distanceTo: (point: HeatPoint, index: number) => number = (point) =>
+    Math.hypot(x - point.x, y - point.y),
 ): number {
   let weightedSum = 0;
   let weightTotal = 0;
 
-  for (const point of points) {
-    const dx = x - point.x;
-    const dy = y - point.y;
-
-    const weight = 1 / (dx * dx + dy * dy + SOFTENING * SOFTENING);
+  points.forEach((point, index) => {
+    const distance = distanceTo(point, index);
+    const weight = 1 / (distance * distance + SOFTENING * SOFTENING);
 
     weightedSum += weight * point.value;
     weightTotal += weight;
-  }
+  });
 
   return weightedSum / weightTotal;
 }
@@ -192,13 +199,24 @@ export function renderHeatmap(
 
   const image = context.createImageData(columns, rows);
 
+  // Walking distance from each sensor, so heat does not leak through walls.
+  const fields = points.map((point) => distanceField([point.x, point.y]));
+
   for (let row = 0; row < rows; row++) {
     for (let column = 0; column < columns; column++) {
-      const value = interpolate(
-        points,
-        (column + 0.5) * CELL,
-        (row + 0.5) * CELL,
-      );
+      const x = (column + 0.5) * CELL;
+      const y = (row + 0.5) * CELL;
+      const square =
+        Math.floor(y / GRID) * GRID_COLUMNS + Math.floor(x / GRID);
+
+      // Pixels far outside the room are clipped away; they use the straight line.
+      const value = interpolate(points, x, y, (point, index) => {
+        const walked = fields[index][square];
+
+        return Number.isFinite(walked)
+          ? walked
+          : Math.hypot(x - point.x, y - point.y);
+      });
 
       const [r, g, b] = colorFor(scale, value);
       const offset = (row * columns + column) * 4;

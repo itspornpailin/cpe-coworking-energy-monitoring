@@ -4,6 +4,7 @@ import {
 } from "react";
 
 import type {
+  CSSProperties,
   KeyboardEvent,
   MouseEvent,
   PointerEvent,
@@ -17,13 +18,24 @@ import {
   PLAN_HEIGHT,
   PLAN_WIDTH,
   ROOM_OUTLINE,
-  nearestSiteCells,
   toPointsAttribute,
 } from "../lib/roomGeometry";
 
 import type {
   Point,
 } from "../lib/roomGeometry";
+
+import {
+  labelSpots,
+  zoneBorders,
+  zonePaths,
+} from "../lib/roomDistance";
+
+import {
+  NO_ZONE_COLOR,
+  zoneColors,
+  zoneDisplayName,
+} from "../lib/zones";
 
 import type {
   EnvironmentNode,
@@ -38,32 +50,17 @@ import {
   renderHeatmapCached,
 } from "../lib/heatmap";
 
-import type {
-  ColorScale,
-} from "../lib/heatmap";
+import { DEFAULT_MIN_LUX } from "../lib/luxMeter";
 
-// What the map shows: coloured zones, or a smooth brightness / temperature field.
+// What the map shows: a smooth brightness or temperature field. Zone borders are
+// drawn on both.
 type Layer =
-  | "zones"
   | "lux"
   | "temperature";
 
-const HEAT_LAYERS: Record<
-  Exclude<Layer, "zones">,
-  {
-    scale: ColorScale;
-    unit: string;
-  }
-> = {
-  lux: {
-    scale: LUX_SCALE,
-    unit: "lx",
-  },
-
-  temperature: {
-    scale: TEMPERATURE_SCALE,
-    unit: "°C",
-  },
+const UNITS: Record<Layer, string> = {
+  lux: "lx",
+  temperature: "°C",
 };
 
 // Admin editing of sensor positions. Leave it out for a read-only map.
@@ -87,6 +84,14 @@ interface RoomPlanPanelProps {
   zones: EnvironmentZone[];
   nodes: EnvironmentNode[];
   editing?: PlanEditing;
+
+  // Admin only: click a sensor to pick its zone in a popup beside it.
+  zonePicker?: {
+    onAssign: (
+      nodeId: string,
+      zoneId: number | null,
+    ) => Promise<void>;
+  };
 }
 
 type PlacedNode =
@@ -98,24 +103,10 @@ type PlacedNode =
 const ROOM_PLAN_URL =
   `${import.meta.env.BASE_URL}roomplan/cpe-coworking.svg`;
 
-// One colour per zone, in the order the zones are listed.
-const ZONE_COLORS = [
-  "#2a9d8f",
-  "#e9a23b",
-  "#4f7cc4",
-  "#b565a7",
-  "#d9644a",
-  "#7fa650",
-  "#8c7ae6",
-  "#c49a6c",
-] as const;
-
-const NO_ZONE_COLOR = "#8a9a96";
-
 const COPY = {
   en: {
     alt:
-      "CPE Coworking Space room layout",
+      "CPE Co-Working Space room layout",
 
     notToScale:
       "Not to scale",
@@ -148,18 +139,35 @@ const COPY = {
       "Map layer",
 
     layerNames: {
-      zones: "Zones",
       lux: "Brightness",
       temperature: "Temperature",
     },
 
     heatNeedsSensors:
       "Needs at least 2 sensors with recent data.",
+
+    zoneKey:
+      "Zones",
+
+    zoneFor: (name: string) =>
+      `Zone for ${name}`,
+
+    pickHint:
+      "Click a sensor to change its zone",
+
+    chooseZone:
+      "Move to zone",
+
+    close:
+      "Close",
+
+    assignFailed:
+      "The zone was not saved. Please try again.",
   },
 
   th: {
     alt:
-      "แผนผัง CPE Coworking Space",
+      "แผนผัง CPE Co-Working Space",
 
     notToScale:
       "ไม่ใช่มาตราส่วนจริง",
@@ -192,13 +200,30 @@ const COPY = {
       "ชั้นข้อมูลบนแผนผัง",
 
     layerNames: {
-      zones: "โซน",
       lux: "ความสว่าง",
       temperature: "อุณหภูมิ",
     },
 
     heatNeedsSensors:
       "ต้องมีเซนเซอร์ที่ส่งข้อมูลล่าสุดอย่างน้อย 2 ตัว",
+
+    zoneKey:
+      "โซน",
+
+    zoneFor: (name: string) =>
+      `โซนของ ${name}`,
+
+    pickHint:
+      "คลิกเซนเซอร์เพื่อเปลี่ยนโซน",
+
+    chooseZone:
+      "ย้ายไปโซน",
+
+    close:
+      "ปิด",
+
+    assignFailed:
+      "บันทึกโซนไม่สำเร็จ กรุณาลองอีกครั้ง",
   },
 } as const;
 
@@ -226,6 +251,7 @@ export function RoomPlanPanel({
   zones,
   nodes,
   editing,
+  zonePicker,
 }: RoomPlanPanelProps) {
   const copy =
     COPY[language];
@@ -248,7 +274,23 @@ export function RoomPlanPanel({
     layer,
     setLayer,
   ] =
-    useState<Layer>("zones");
+    useState<Layer>("lux");
+
+  // The sensor whose zone popup is open, and the marker to give focus back to.
+  const [
+    pickedId,
+    setPickedId,
+  ] =
+    useState<string | null>(null);
+
+  const openerRef =
+    useRef<SVGGElement | null>(null);
+
+  const [
+    assignFailed,
+    setAssignFailed,
+  ] =
+    useState(false);
 
   // While a marker is being dragged it follows the pointer;
   // the new position is only saved when it is dropped.
@@ -276,38 +318,8 @@ export function RoomPlanPanel({
           : node,
       );
 
-  // Every spot on the drawing belongs to its nearest sensor, so a sensor's
-  // zone decides the colour around it. Moving a sensor to another zone
-  // therefore recolours the map with no zone shapes to redraw.
-  const cells =
-    nearestSiteCells(
-      placed.map(
-        (node): Point => [
-          node.x,
-          node.y,
-        ],
-      ),
-    );
-
-  // Colours follow the zone's id, not its position in the list, so adding or
-  // renaming a zone never changes the colour of the others.
   const zoneColor =
-    new Map(
-      [...zones]
-        .sort(
-          (a, b) =>
-            a.areaId - b.areaId,
-        )
-        .map(
-          (zone, index) => [
-            zone.areaId,
-            ZONE_COLORS[
-              index %
-                ZONE_COLORS.length
-            ],
-          ],
-        ),
-    );
+    zoneColors(zones);
 
   const zoneInfo =
     new Map(
@@ -323,6 +335,39 @@ export function RoomPlanPanel({
         },
       ]),
     );
+
+  // Every spot on the floor belongs to the sensor nearest on foot, so a sensor's
+  // zone decides which zone the floor around it is in. Sensors with no zone share
+  // group 0 (zone ids start at 1).
+  const sites =
+    placed.map(
+      (node): Point => [
+        node.x,
+        node.y,
+      ],
+    );
+
+  const groups =
+    placed.map((node) =>
+      node.zoneId !== null &&
+      zoneInfo.has(node.zoneId)
+        ? node.zoneId
+        : 0,
+    );
+
+  const cells =
+    zonePaths(sites);
+
+  const dividers =
+    [
+      ...zoneBorders(
+        sites,
+        groups,
+      ).values(),
+    ].join("");
+
+  const nameSpots =
+    labelSpots(sites, groups);
 
   const updatedTimes =
     nodes
@@ -353,35 +398,33 @@ export function RoomPlanPanel({
 
   // Heat map: only sensors with a recent value for this layer take part.
   const heatPoints =
-    layer === "zones"
-      ? []
-      : placed.flatMap(
-          (node) => {
-            const value =
-              layer === "lux"
-                ? node.lightLux
-                : node.temperatureC;
+    placed.flatMap(
+      (node) => {
+        const value =
+          layer === "lux"
+            ? node.lightLux
+            : node.temperatureC;
 
-            return node.stale ||
-              value === null
-              ? []
-              : [
-                  {
-                    x: Math.round(
-                      node.x,
-                    ),
-                    y: Math.round(
-                      node.y,
-                    ),
-                    // Rounded so the picture is only redrawn when a value visibly changes.
-                    value:
-                      Math.round(
-                        value * 10,
-                      ) / 10,
-                  },
-                ];
-          },
-        );
+        return node.stale ||
+          value === null
+          ? []
+          : [
+              {
+                x: Math.round(
+                  node.x,
+                ),
+                y: Math.round(
+                  node.y,
+                ),
+                // Rounded so the picture is only redrawn when a value visibly changes.
+                value:
+                  Math.round(
+                    value * 10,
+                  ) / 10,
+              },
+            ];
+      },
+    );
 
   // Brightness keeps a fixed scale (500 lx looks the same all day). Temperature zooms
   // in on the range actually measured, so a 1-2 degree difference across the room shows.
@@ -398,12 +441,10 @@ export function RoomPlanPanel({
       : LUX_SCALE;
 
   const heatUrl =
-    layer === "zones"
-      ? null
-      : renderHeatmapCached(
-          heatPoints,
-          heatScale,
-        );
+    renderHeatmapCached(
+      heatPoints,
+      heatScale,
+    );
 
   // The number printed under a marker follows the chosen layer.
   function markerLabel(
@@ -423,11 +464,58 @@ export function RoomPlanPanel({
 
     return layer ===
       "temperature"
-      ? value.toFixed(1)
-      : String(
-          Math.round(value),
-        );
+      ? `${value.toFixed(1)} °C`
+      : `${Math.round(value)} lx`;
   }
+
+  // Opens the zone popup of a sensor.
+  function pickNode(
+    nodeId: string,
+    marker: SVGGElement,
+  ) {
+    openerRef.current = marker;
+
+    setAssignFailed(false);
+
+    setPickedId(nodeId);
+  }
+
+  function closePicker() {
+    setPickedId(null);
+
+    openerRef.current?.focus();
+  }
+
+  async function assign(
+    nodeId: string,
+    zoneId: number | null,
+  ) {
+    setAssignFailed(false);
+
+    try {
+      await zonePicker?.onAssign(
+        nodeId,
+        zoneId,
+      );
+
+      closePicker();
+    } catch {
+      setAssignFailed(true);
+    }
+  }
+
+  // Not while sensors are being dragged: the popup would be in the way.
+  const picking =
+    zonePicker !== undefined &&
+    editing === undefined;
+
+  const picked =
+    picking
+      ? placed.find(
+          (node) =>
+            node.nodeId === pickedId,
+        )
+      : undefined;
 
   // Converts a pointer position on screen into drawing coordinates.
   function toPlanPoint(
@@ -466,6 +554,8 @@ export function RoomPlanPanel({
     event: MouseEvent<SVGSVGElement>,
   ) {
     if (!editing) {
+      setPickedId(null);
+
       return;
     }
 
@@ -566,6 +656,21 @@ export function RoomPlanPanel({
     event: KeyboardEvent<SVGGElement>,
     node: PlacedNode,
   ) {
+    if (
+      picking &&
+      (event.key === "Enter" ||
+        event.key === " ")
+    ) {
+      event.preventDefault();
+
+      pickNode(
+        node.nodeId,
+        event.currentTarget,
+      );
+
+      return;
+    }
+
     if (!editing) {
       return;
     }
@@ -627,7 +732,6 @@ export function RoomPlanPanel({
         >
           {(
             [
-              "zones",
               "lux",
               "temperature",
             ] as const
@@ -651,6 +755,13 @@ export function RoomPlanPanel({
           ))}
         </div>
 
+        {picking && (
+          <p className="plan-hint">
+            {copy.pickHint}
+          </p>
+        )}
+
+        <div className="map-stage">
         <div className="map-container">
           {mapFailed ? (
             <div
@@ -668,11 +779,13 @@ export function RoomPlanPanel({
           ) : (
             <svg
               ref={svgRef}
-              className={
-                editing
-                  ? "room-plan-svg is-editing"
-                  : "room-plan-svg"
-              }
+              className={[
+                "room-plan-svg",
+                editing ? "is-editing" : "",
+                picking ? "is-picking" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               viewBox={`0 0 ${PLAN_WIDTH} ${PLAN_HEIGHT}`}
               role="group"
               aria-label={copy.alt}
@@ -716,65 +829,53 @@ export function RoomPlanPanel({
                 }}
               />
 
-              {layer !== "zones" &&
-                heatUrl && (
-                  <image
-                    className="plan-heat-image"
-                    href={heatUrl}
-                    width={PLAN_WIDTH}
-                    height={PLAN_HEIGHT}
-                    preserveAspectRatio="none"
-                    clipPath="url(#room-floor)"
-                  />
-                )}
-
-              {layer === "zones" && (
-              <g clipPath="url(#room-floor)">
-                {placed.map(
-                  (node, index) => {
-                    const info =
-                      node.zoneId === null
-                        ? undefined
-                        : zoneInfo.get(
-                            node.zoneId,
-                          );
-
-                    const color =
-                      info?.color ??
-                      NO_ZONE_COLOR;
-
-                    const points =
-                      toPointsAttribute(
-                        cells[index],
-                      );
-
-                    return (
-                      <g key={node.nodeId}>
-                        <polygon
-                          points={points}
-                          fill={color}
-                          fillOpacity={
-                            info
-                              ? 0.34
-                              : 0.14
-                          }
-                          stroke={color}
-                          strokeOpacity={0.6}
-                          strokeWidth={0.8}
-                        />
-
-                        {info?.zone.warning && (
-                          <polygon
-                            points={points}
-                            fill="url(#zone-warning-hatch)"
-                          />
-                        )}
-                      </g>
-                    );
-                  },
-                )}
-              </g>
+              {heatUrl && (
+                <image
+                  className="plan-heat-image"
+                  href={heatUrl}
+                  width={PLAN_WIDTH}
+                  height={PLAN_HEIGHT}
+                  preserveAspectRatio="none"
+                  clipPath="url(#room-floor)"
+                />
               )}
+
+              <g
+                className="plan-zones"
+                clipPath="url(#room-floor)"
+              >
+                {[...new Set(groups)]
+                  .filter(
+                    (group) =>
+                      zoneInfo.get(group)?.zone
+                        .warning,
+                  )
+                  .map((group) => (
+                    <path
+                      key={group}
+                      d={cells
+                        .filter(
+                          (_, index) =>
+                            groups[index] ===
+                            group,
+                        )
+                        .join("")}
+                      fill="url(#zone-warning-hatch)"
+                      shapeRendering="crispEdges"
+                    />
+                  ))}
+
+                {/* A white line on a soft dark one shows on both yellow and grey. */}
+                <path
+                  className="plan-zone-casing"
+                  d={dividers}
+                />
+
+                <path
+                  className="plan-zone-divider"
+                  d={dividers}
+                />
+              </g>
 
               {placed.map((node) => {
                 const info =
@@ -785,7 +886,9 @@ export function RoomPlanPanel({
                       );
 
                 const selected =
-                  editing?.selectedId ===
+                  (editing
+                    ? editing.selectedId
+                    : picked?.nodeId) ===
                   node.nodeId;
 
                 const description =
@@ -793,8 +896,12 @@ export function RoomPlanPanel({
                     node.name,
 
                     `${copy.zone}: ${
-                      info?.zone.name ??
-                      copy.noZone
+                      info
+                        ? zoneDisplayName(
+                            info.zone,
+                            language,
+                          )
+                        : copy.noZone
                     }`,
 
                     node.stale ||
@@ -831,11 +938,22 @@ export function RoomPlanPanel({
                       .join(" ")}
                     transform={`translate(${node.x} ${node.y})`}
                     tabIndex={0}
-                    role="img"
-                    aria-label={description}
-                    onClick={(event) =>
-                      event.stopPropagation()
+                    role={
+                      picking
+                        ? "button"
+                        : "img"
                     }
+                    aria-label={description}
+                    onClick={(event) => {
+                      event.stopPropagation();
+
+                      if (picking) {
+                        pickNode(
+                          node.nodeId,
+                          event.currentTarget,
+                        );
+                      }
+                    }}
                     onPointerDown={(
                       event,
                     ) =>
@@ -882,11 +1000,10 @@ export function RoomPlanPanel({
                       className="plan-node-dot"
                       r="8"
                       style={{
-                        stroke:
-                          node.stale
-                            ? NO_ZONE_COLOR
-                            : (info?.color ??
-                              NO_ZONE_COLOR),
+                        fill: node.stale
+                          ? undefined
+                          : (info?.color ??
+                            NO_ZONE_COLOR),
                       }}
                     />
 
@@ -904,68 +1021,143 @@ export function RoomPlanPanel({
               })}
             </svg>
           )}
+
+          {/* Ordinary text on top of the drawing, so it stays readable at any width.
+              Screen readers get the zone from each sensor and from the legend. */}
+          {!mapFailed &&
+            [...nameSpots].map(
+              ([group, [x, y]]) => {
+                const info =
+                  zoneInfo.get(group);
+
+                return (
+                  <span
+                    key={group}
+                    className="plan-zone-name"
+                    aria-hidden="true"
+                    style={{
+                      left: `${(x / PLAN_WIDTH) * 100}%`,
+                      top: `${(y / PLAN_HEIGHT) * 100}%`,
+                      "--zone":
+                        info?.color ??
+                        NO_ZONE_COLOR,
+                    } as CSSProperties}
+                  >
+                    {info
+                      ? zoneDisplayName(
+                          info.zone,
+                          language,
+                        )
+                      : copy.noZone}
+                  </span>
+                );
+              },
+            )}
+        </div>
+
+        {picked && (
+          <div
+            // A new sensor gets a new popup, so focus moves into it again.
+            key={picked.nodeId}
+            className="plan-pop"
+            role="dialog"
+            aria-label={copy.zoneFor(
+              picked.name,
+            )}
+            style={{
+              "--x": `${(picked.x / PLAN_WIDTH) * 100}%`,
+              "--y": `${(picked.y / PLAN_HEIGHT) * 100}%`,
+              // Beside the sensor, on the side with more room, and never off the map.
+              "--shift-x":
+                picked.x < PLAN_WIDTH / 2
+                  ? "22px"
+                  : "calc(-100% - 22px)",
+              "--shift-y": `-${(picked.y / PLAN_HEIGHT) * 100}%`,
+            } as CSSProperties}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                closePicker();
+              }
+            }}
+          >
+            <div className="plan-pop-title">
+              <strong>{picked.name}</strong>
+
+              <button
+                type="button"
+                className="plan-pop-close"
+                aria-label={copy.close}
+                onClick={closePicker}
+              >
+                ×
+              </button>
+            </div>
+
+            <span className="plan-pop-label">
+              {copy.chooseZone}
+            </span>
+
+            {[
+              ...zones.map((zone) => ({
+                id: zone.areaId,
+                name: zoneDisplayName(
+                  zone,
+                  language,
+                ),
+                color:
+                  zoneColor.get(
+                    zone.areaId,
+                  ),
+              })),
+              {
+                id: null,
+                name: copy.noZone,
+                color: NO_ZONE_COLOR,
+              },
+            ].map((choice) => (
+              <button
+                key={choice.id ?? "none"}
+                type="button"
+                className="plan-assign-zone"
+                style={{
+                  "--zone": choice.color,
+                } as CSSProperties}
+                aria-pressed={
+                  picked.zoneId ===
+                  choice.id
+                }
+                autoFocus={
+                  picked.zoneId ===
+                  choice.id
+                }
+                onClick={() =>
+                  void assign(
+                    picked.nodeId,
+                    choice.id,
+                  )
+                }
+              >
+                {choice.name}
+              </button>
+            ))}
+
+            {assignFailed && (
+              <p
+                className="sensor-editor-error"
+                role="alert"
+              >
+                {copy.assignFailed}
+              </p>
+            )}
+          </div>
+        )}
         </div>
 
         <div className="plan-legend-wrap">
-          {layer !== "zones" && (
-            <div className="plan-heat-legend">
-              <div
-                className="plan-heat-bar"
-                style={{
-                  background:
-                    gradientCss(
-                      heatScale,
-                    ),
-                }}
-              />
-
-              <div className="plan-heat-ticks">
-                {Array.from(
-                  { length: 5 },
-                  (_, index) => {
-                    const {
-                      min,
-                      max,
-                    } =
-                      heatScale;
-
-                    return (
-                      <span
-                        key={index}
-                      >
-                        {Math.round(
-                          min +
-                            (index *
-                              (max -
-                                min)) /
-                              4,
-                        )}
-                      </span>
-                    );
-                  },
-                )}
-
-                <span className="plan-heat-unit">
-                  {
-                    HEAT_LAYERS[
-                      layer
-                    ].unit
-                  }
-                </span>
-              </div>
-
-              {!heatUrl && (
-                <p className="plan-status">
-                  {
-                    copy.heatNeedsSensors
-                  }
-                </p>
-              )}
-            </div>
-          )}
-
-          {layer === "zones" && (
-          <ul className="plan-legend">
+          <ul
+            className="plan-legend"
+            aria-label={copy.zoneKey}
+          >
             {zones.map((zone) => (
               <li key={zone.areaId}>
                 <span
@@ -978,17 +1170,14 @@ export function RoomPlanPanel({
                   }}
                 />
 
-                {zone.name}
+                {zoneDisplayName(
+                  zone,
+                  language,
+                )}
               </li>
             ))}
 
-            {placed.some(
-              (node) =>
-                node.zoneId === null ||
-                !zoneInfo.has(
-                  node.zoneId,
-                ),
-            ) && (
+            {groups.includes(0) && (
               <li>
                 <span
                   className="plan-legend-chip"
@@ -1012,7 +1201,77 @@ export function RoomPlanPanel({
               </li>
             )}
           </ul>
-          )}
+
+          <div className="plan-heat-legend">
+            <div className="plan-heat-scale">
+              <div
+                className="plan-heat-bar"
+                style={{
+                  background:
+                    gradientCss(
+                      heatScale,
+                    ),
+                }}
+              />
+
+              {layer === "lux" && (
+                <span
+                  className="plan-heat-mark"
+                  aria-hidden="true"
+                  style={{
+                    left: `${((DEFAULT_MIN_LUX - heatScale.min) / (heatScale.max - heatScale.min)) * 100}%`,
+                  }}
+                />
+              )}
+            </div>
+
+            <div className="plan-heat-ticks">
+              {Array.from(
+                { length: 5 },
+                (_, index) => {
+                  const {
+                    min,
+                    max,
+                  } =
+                    heatScale;
+
+                  const tick =
+                    min +
+                    (index *
+                      (max - min)) /
+                      4;
+
+                  return (
+                    <span key={index}>
+                      {Number(
+                        tick.toFixed(1),
+                      )}{" "}
+                      {UNITS[layer]}
+                    </span>
+                  );
+                },
+              )}
+            </div>
+
+            {layer === "lux" && (
+              <p className="plan-status">
+                {language === "th"
+                  ? `เส้นขีด = ${DEFAULT_MIN_LUX} ลักซ์ ค่าแนะนำสำหรับงานบนโต๊ะ `
+                  : `Line = ${DEFAULT_MIN_LUX} lux, recommended for desk work. `}
+                <a href="#awareness">
+                  {language === "th" ? "ทำไม?" : "Why?"}
+                </a>
+              </p>
+            )}
+
+            {!heatUrl && (
+              <p className="plan-status">
+                {
+                  copy.heatNeedsSensors
+                }
+              </p>
+            )}
+          </div>
 
           <p className="plan-status">
             {lastUpdated === null

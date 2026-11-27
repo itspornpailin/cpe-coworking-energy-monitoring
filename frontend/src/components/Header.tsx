@@ -50,11 +50,11 @@ export function Header({
     <header className="app-header">
       <div className="brand">
         <h1>
-          CPE Coworking Space
+          {copy.header.brand}
         </h1>
 
         <p>
-          Environment Monitoring Dashboard
+          {copy.header.brandSubtitle}
         </p>
       </div>
 

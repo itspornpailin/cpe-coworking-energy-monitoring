@@ -61,11 +61,25 @@ test("colours are clamped at the ends of the scale", () => {
 
 test("a colour halfway between two stops is the mix of both", () => {
   // 125 lx is halfway between the first two stops (0 and 250 lx).
-  const [r, g, b] = colorFor(LUX_SCALE, 125);
+  const colour = colorFor(LUX_SCALE, 125);
+  const [[, from], [, to]] = LUX_SCALE.stops;
 
-  assert.ok(Math.abs(r - (13 + 106) / 2) < 1e-9);
-  assert.ok(Math.abs(g - (8 + 0) / 2) < 1e-9);
-  assert.ok(Math.abs(b - (135 + 168) / 2) < 1e-9);
+  colour.forEach((channel, i) => {
+    assert.ok(Math.abs(channel - (from[i] + to[i]) / 2) < 1e-9);
+  });
+});
+
+test("brighter always looks lighter, from warm grey to yellow", () => {
+  const lightness = ([r, g, b]: readonly [number, number, number]) =>
+    0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+  for (let lux = 50; lux <= 1000; lux += 50) {
+    assert.ok(lightness(colorFor(LUX_SCALE, lux)) > lightness(colorFor(LUX_SCALE, lux - 50)), `${lux} lx`);
+  }
+
+  const [r, g, b] = colorFor(LUX_SCALE, 1000);
+
+  assert.ok(r > 200 && g > 200 && b < 130, "the top is yellow");
 });
 
 test("a temperature scale zooms in on the measured range", () => {
