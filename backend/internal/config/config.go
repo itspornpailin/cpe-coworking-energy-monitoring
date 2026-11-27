@@ -22,11 +22,6 @@ type Config struct {
 	// How often one node's reading is saved to the database (live values are always kept).
 	ReadingSaveInterval time.Duration
 
-	// How often lighting circuits are checked, and how long a new ON/OFF state must hold
-	// before it is accepted (so a passing cloud or a hand over a sensor is ignored).
-	LightingCheckInterval time.Duration
-	LightingConfirmFor    time.Duration
-
 	ReadTimeout       time.Duration
 	ReadHeaderTimeout time.Duration
 	WriteTimeout      time.Duration
@@ -120,36 +115,6 @@ func Load() (
 			)
 	}
 
-	lightingCheckInterval, err :=
-		getDurationEnv(
-			"LIGHTING_CHECK_INTERVAL",
-			10*time.Second,
-		)
-
-	if err != nil ||
-		lightingCheckInterval < time.Second {
-
-		return Config{},
-			fmt.Errorf(
-				"LIGHTING_CHECK_INTERVAL must be a duration of at least 1s, for example 10s",
-			)
-	}
-
-	lightingConfirmFor, err :=
-		getDurationEnv(
-			"LIGHTING_CONFIRM_FOR",
-			time.Minute,
-		)
-
-	if err != nil ||
-		lightingConfirmFor < 0 {
-
-		return Config{},
-			fmt.Errorf(
-				"LIGHTING_CONFIRM_FOR must be a duration of 0 or more, for example 1m",
-			)
-	}
-
 	appEnv :=
 		getEnv(
 			"APP_ENV",
@@ -171,9 +136,6 @@ func Load() (
 		SessionTTL: sessionTTL,
 
 		ReadingSaveInterval: readingSaveInterval,
-
-		LightingCheckInterval: lightingCheckInterval,
-		LightingConfirmFor:    lightingConfirmFor,
 
 		/*
 			Local development uses HTTP,

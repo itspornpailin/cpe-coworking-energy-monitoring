@@ -111,8 +111,8 @@ func NewRouter(
 			db,
 		)
 
-	lightingCircuitHandler :=
-		handler.NewLightingCircuitHandler(
+	acEnergyHandler :=
+		handler.NewACEnergyHandler(
 			db,
 			live,
 		)
@@ -180,23 +180,13 @@ func NewRouter(
 
 					// The electricity estimate is for admins only.
 					admin.Get(
-						"/lighting-circuits",
-						lightingCircuitHandler.List,
-					)
-
-					admin.Get(
-						"/lighting-energy",
-						lightingCircuitHandler.Energy,
-					)
-
-					admin.Patch(
-						"/admin/lighting-circuits/{circuitID}",
-						lightingCircuitHandler.Update,
+						"/ac-energy",
+						acEnergyHandler.Energy,
 					)
 
 					admin.Put(
-						"/admin/lighting-circuits/{circuitID}/nodes",
-						lightingCircuitHandler.SetNodes,
+						"/admin/ac-units/{nodeID}",
+						acEnergyHandler.SetSpecs,
 					)
 
 					admin.Post(

@@ -7,6 +7,7 @@ package mocksensors
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math"
 	"math/rand/v2"
@@ -105,6 +106,14 @@ func publish(ctx context.Context, store *telemetry.Store, now time.Time) {
 			log.Printf("mock sensors: %s: %v", n.ID, err)
 		}
 	}
+
+	for i := range acCount {
+		running := ACRunning(i, simulatedTime(now))
+
+		if err := store.UpdateAC(ctx, acID(i), nil, &running, now); err != nil {
+			log.Printf("mock sensors: %s: %v", acID(i), err)
+		}
+	}
 }
 
 // simulatedTime returns now, or now moved to the hour in MOCK_SENSOR_HOUR (0-23) when that is set.
@@ -141,31 +150,34 @@ ON CONFLICT DO NOTHING;`, n.Zone, n.ID); err != nil {
 			return err
 		}
 
+	}
+
+	for i := range acCount {
 		if _, err := db.Exec(ctx, `
-INSERT INTO lighting_circuit_nodes (circuit_id, node_id)
-SELECT id, $2 FROM lighting_circuits WHERE code = $1
-ON CONFLICT DO NOTHING;`, demoCircuit[n.ID], n.ID); err != nil {
+INSERT INTO sensor_nodes (node_id, node_type, name)
+VALUES ($1, 'ac', $2)
+ON CONFLICT (node_id) DO NOTHING;`, acID(i), fmt.Sprintf("AC %d", i+1)); err != nil {
 			return err
 		}
 	}
 
-	// Demo thresholds so the circuits show ON/OFF. Real ones come from switching the lights on and off
-	// once the sensors are installed, so only circuits that are not calibrated yet are touched.
-	_, err := db.Exec(ctx, `
-UPDATE lighting_circuits
-SET on_above_lux = 250, off_below_lux = 120
-WHERE on_above_lux IS NULL;`)
-
-	return err
+	return nil
 }
 
-// Which lighting circuit each demo node is placed under.
-var demoCircuit = map[string]string{
-	"demo_env_01": "LP-1",
-	"demo_env_02": "LP-3",
-	"demo_env_03": "LP-3",
-	"demo_env_04": "LP-5",
-	"demo_env_05": "LP-5",
-	"demo_env_06": "LP-7",
-	"demo_env_07": "LP-9",
+// The room has 7 ceiling-suspended air conditioners.
+const acCount = 7
+
+func acID(i int) string {
+	return fmt.Sprintf("demo_ac_%02d", i+1)
+}
+
+// ACRunning says whether demo air conditioner i (0-based) is ON at time t:
+// the first four run 09:00-18:00, the rest join for the busier afternoon.
+func ACRunning(i int, t time.Time) bool {
+	start := 9
+	if i >= 4 {
+		start = 13
+	}
+
+	return t.Hour() >= start && t.Hour() < 18
 }
